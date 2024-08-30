@@ -25,18 +25,13 @@ import { UsersPipe } from './pipes/users.pipe';
 import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ROLE_LIST } from '../common/constant';
-import { AddressesService } from '../address/addresses.service';
-import { generatePasswordString } from '../common/function';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
-  constructor(
-    private readonly userService: UsersService,
-    private readonly addressService: AddressesService,
-  ) {}
+  constructor(private readonly userService: UsersService) {}
 
-  @Roles([ROLE_LIST.ADMIN, ROLE_LIST.OPERATOR])
+  @Roles([ROLE_LIST.ADMIN])
   @Get()
   findAll() {
     return this.userService.getUser();
@@ -63,19 +58,9 @@ export class UsersController {
   }
 
   @Post()
-  @Roles([ROLE_LIST.ADMIN, ROLE_LIST.OPERATOR])
+  @Roles([ROLE_LIST.ADMIN])
   async create(@Body() createUserDto: CreateUserDto, @Res() res: Response) {
-    const addressInfo = await this.addressService.createAddress(
-      createUserDto.address,
-    );
-    const addressId = addressInfo.id;
-    const password = generatePasswordString();
-    const user = await this.userService.addUser(
-      createUserDto,
-      addressId,
-      password,
-      1,
-    );
+    const user = await this.userService.addUser(createUserDto, '123456');
     res.status(HttpStatus.OK).json({ id: user });
   }
 
@@ -84,12 +69,15 @@ export class UsersController {
     @Body('', UsersPipe) createUserDto: CreateUserDto,
     @Res() res: Response,
   ) {
-    // const user = await this.userService.addUser(createUserDto);
-    // res.status(HttpStatus.OK).json({ id: user });
+    const user = await this.userService.addUser(
+      createUserDto,
+      createUserDto.password,
+    );
+    res.status(HttpStatus.OK).json({ data: user });
   }
 
   @Put('detail/:id')
-  @Roles([ROLE_LIST.ADMIN, ROLE_LIST.OPERATOR])
+  @Roles([ROLE_LIST.ADMIN])
   updateUserById(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserPayloadDto: UpdateUserPayloadDto,
@@ -115,12 +103,7 @@ export class UsersController {
   }
 
   @Put('self')
-  @Roles([
-    ROLE_LIST.ADMIN,
-    ROLE_LIST.OPERATOR,
-    ROLE_LIST.COLLECTOR,
-    ROLE_LIST.SHIPPER,
-  ])
+  @Roles([ROLE_LIST.ADMIN])
   async updateSelfInfo(
     @Body() updateUserPayloadDto: UpdateUserPayloadDto,
     @Res() res: Response,
@@ -128,19 +111,6 @@ export class UsersController {
   ) {
     let addressInfo;
     const updateUserDto = updateUserPayloadDto;
-    if (updateUserPayloadDto.address) {
-      if (updateUserPayloadDto.address.id) {
-        addressInfo = await this.addressService.updateAddressInfo(
-          updateUserPayloadDto.address,
-          updateUserPayloadDto.address.id,
-        );
-      } else {
-        addressInfo = await this.addressService.createAddress(
-          updateUserPayloadDto.address,
-        );
-      }
-      updateUserDto.address = addressInfo.id;
-    }
 
     const userInfo = await this.userService.updateSelfInfo(
       updateUserDto,
@@ -155,7 +125,6 @@ export class UsersController {
   }
 
   @Put('notification')
-  @Roles([ROLE_LIST.COLLECTOR, ROLE_LIST.SHIPPER])
   async updateNotificationToken(
     @Body() data: { token: string },
     @Res() res: Response,

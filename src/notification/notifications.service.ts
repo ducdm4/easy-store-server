@@ -2,8 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { NotificationEntity } from 'src/typeorm/entities/notification.entity';
 import { Repository } from 'typeorm';
 import * as firebaseAdmin from 'firebase-admin';
-import { BasicOrderInfo } from 'src/order/dto/order.dto';
-import { ORDER_STATUS } from 'src/common/constant';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyD80ARblxY_LnRznwmySo-WExRKx_OdOJc',
@@ -23,21 +21,6 @@ export class NotificationsService {
     @Inject('NOTIFICATION_REPOSITORY')
     private notificationRepository: Repository<NotificationEntity>,
   ) {}
-
-  async sendPushNotificationForOrder(
-    token: string,
-    notification: { title: string; body: string },
-  ) {
-    await firebaseAdmin
-      .messaging()
-      .send({
-        notification,
-        token,
-      })
-      .catch((error: any) => {
-        console.error(error);
-      });
-  }
 
   async sendPushNotificationForEmployee(
     token: string,

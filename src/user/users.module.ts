@@ -1,25 +1,29 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AddressesService } from '../address/addresses.service';
-import { EmployeesService } from '../employee/employees.service';
 import { UsersController } from './users.controller';
 import { DatabaseModule } from '../database/database.module';
 import { UserProviders } from '../typeorm/providers/user.providers';
-import { AddressProviders } from '../typeorm/providers/address.providers';
-import { EmployeeProviders } from '../typeorm/providers/employee.providers';
+import { PersonalInfoProviders } from '../typeorm/providers/personalInfo.providers';
 import { MailService } from '../mail/mail.service';
+import { AuthService } from '../auth/auth.service';
+import { JwtStrategy } from '../auth/strategy/jwt.strategy';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [
+    DatabaseModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+    }),
+  ],
   controllers: [UsersController],
   providers: [
     ...UserProviders,
-    ...AddressProviders,
-    ...EmployeeProviders,
+    ...PersonalInfoProviders,
     UsersService,
-    AddressesService,
     MailService,
-    EmployeesService,
+    AuthService,
+    JwtStrategy,
   ],
   exports: [UsersService],
 })

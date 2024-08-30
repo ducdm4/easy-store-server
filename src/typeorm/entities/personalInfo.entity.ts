@@ -15,7 +15,7 @@ export class PersonalInfoEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: false })
   email: string;
 
   @Column({ nullable: true })

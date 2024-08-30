@@ -1,25 +1,16 @@
-import {
-  ForbiddenException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UserEntity } from '../typeorm/entities/user.entity';
-import { UsersService } from '../user/users.service';
 import { Repository } from 'typeorm';
 import { SignInDto } from './dto/signIn.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { ROLE_LIST } from '../common/constant';
-import { EmployeesService } from '../employee/employees.service';
+import { ROLE_LIST } from 'src/common/constant';
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<UserEntity>,
-    private employeesService: EmployeesService,
     private jwtService: JwtService,
   ) {}
 
@@ -28,16 +19,26 @@ export class AuthService {
     const user = await this.userRepository.findOne({
       select: {
         id: true,
-        email: true,
         password: true,
         role: true,
-        firstName: true,
-        lastName: true,
+        personalInfo: {
+          email: true,
+          firstName: true,
+          lastName: true,
+          profilePicture: {
+            id: true,
+          },
+        },
       },
       relations: {
-        profilePicture: true,
+        personalInfo: true,
       },
-      where: { email },
+      where: {
+        role: ROLE_LIST.STORE_OWNER,
+        personalInfo: {
+          email: email,
+        },
+      },
     });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -45,16 +46,19 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
       delete user.password;
-      let employeeInfo = null;
-      if (user.role !== ROLE_LIST.ADMIN && user.role !== ROLE_LIST.CUSTOMER) {
-        employeeInfo = await this.employeesService.getEmployeeByUserId(user.id);
-      }
-      const tokens = await this.getTokens({ ...user, employeeInfo });
+      const tokens = await this.getTokens({
+        id: user.id,
+        role: user.role,
+        ...user.personalInfo,
+      });
       return {
         tokens,
         user: {
-          ...user,
-          employeeInfo,
+          id: user.id,
+          role: user.role,
+          email: user.personalInfo.email,
+          firstName: user.personalInfo.firstName,
+          lastName: user.personalInfo.lastName,
         },
       };
     } else {

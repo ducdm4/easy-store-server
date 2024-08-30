@@ -1,5 +1,9 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { UserEntity } from '../typeorm/entities/user.entity';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { In, Not, Repository } from 'typeorm';
 import {
   UpdateUserDto,
@@ -9,16 +13,21 @@ import {
 } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { MailService } from '../mail/mail.service';
-import { EmployeesService } from 'src/employee/employees.service';
+import { AuthService } from '../auth/auth.service';
 import { ROLE_LIST } from 'src/common/constant';
+import { UserEntity } from '../typeorm/entities/user.entity';
+import { PersonalInfoEntity } from '../typeorm/entities/personalInfo.entity';
+import { dataSource } from '../database/database.providers';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<UserEntity>,
+    @Inject('PERSONAL_INFO_REPOSITORY')
+    private personalInfoRepository: Repository<PersonalInfoEntity>,
     private mailService: MailService,
-    private employeeService: EmployeesService,
+    private authService: AuthService,
   ) {}
   getUser() {
     return this.userRepository.find();
@@ -37,38 +46,84 @@ export class UsersService {
     }
   }
 
-  async addUser(
-    user: CreateUserDto,
-    addressId,
-    password,
-    sendMailType: number, // 1: send mail notify password, 2: send mail verify user
-  ) {
+  async addUser(user: CreateUserDto, password: string) {
     const { email } = user;
     const existingUser = await this.userRepository.findOne({
+      select: {
+        id: true,
+      },
+      relations: {
+        personalInfo: true,
+      },
       where: {
-        email,
+        role: ROLE_LIST.STORE_OWNER,
+        personalInfo: {
+          email: email,
+        },
       },
     });
     if (existingUser) {
-      throw new BadRequestException('user existed');
+      throw new BadRequestException('User with this email is already exist');
     }
+
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
-    const newUser = this.userRepository.create({
-      ...user,
-      address: addressId,
-      password: hashedPassword,
-      createdAt: new Date(),
-    });
-    await this.userRepository.save(newUser);
-    if (sendMailType === 1) {
-      await this.mailService.sendEmailCreateAccount({
-        name: `${user.firstName} ${user.lastName}`,
-        mail: email,
-        password: password,
+
+    let newUser: UserEntity;
+    let newPersonalInfo: PersonalInfoEntity;
+
+    const queryRunner = dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      newPersonalInfo = this.personalInfoRepository.create({
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone || null,
+        dob: user.dob || null,
+        gender: user.gender,
+        address: user.address,
       });
+
+      await queryRunner.manager.save(newPersonalInfo);
+      newUser = this.userRepository.create({
+        ...user,
+        password: hashedPassword,
+        role: ROLE_LIST.STORE_OWNER,
+        personalInfo: {
+          id: newPersonalInfo.id,
+        },
+        createdAt: new Date(),
+      });
+
+      await queryRunner.manager.save(newUser);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException(
+        'Something went wrong, please try again',
+      );
+    } finally {
+      await queryRunner.release();
     }
-    return newUser;
+
+    //TODO: send mail verify user
+    delete newUser.password;
+    delete newUser.personalInfo;
+
+    const userInfo = {
+      id: newUser.id,
+      email: newPersonalInfo.email,
+      firstName: newPersonalInfo.firstName,
+      lastName: newPersonalInfo.lastName,
+      role: newUser.role,
+    };
+
+    const tokens = await this.authService.getTokens(userInfo);
+    return { user: userInfo, tokens };
+    // return '';
   }
 
   async updateUser(id: number, updateUserDetails: UpdateUserDto) {
@@ -85,9 +140,11 @@ export class UsersService {
   async updatePassword(passwordInfo: ChangePasswordDto, user: Express.User) {
     const userInfo = await this.userRepository.findOne({
       select: {
-        firstName: true,
-        lastName: true,
         password: true,
+        personalInfo: {
+          firstName: true,
+          lastName: true,
+        },
       },
       where: {
         id: user['id'],
@@ -111,7 +168,7 @@ export class UsersService {
           { password: hashedPassword },
         );
         await this.mailService.sendEmailChangePassword(
-          `${userInfo.firstName} ${userInfo.lastName}`,
+          `${userInfo.personalInfo.firstName} ${userInfo.personalInfo.lastName}`,
         );
         return result;
       } else {
@@ -124,35 +181,35 @@ export class UsersService {
 
   async findSelfUser(user: Express.User) {
     const userLoggedInfo = await this.userRepository.findOne({
-      relations: {
-        profilePicture: true,
-        address: {
-          city: true,
-          district: true,
-          ward: true,
-          street: true,
-        },
-      },
-      where: {
-        email: user['email'],
-      },
+      relations: {},
     });
     return userLoggedInfo;
   }
 
   async getUserVerified(id: number, role: number) {
-    if (role !== ROLE_LIST.ADMIN) {
-      const employee = await this.employeeService.getEmployeeVerify(id);
-      return employee;
-    }
     const userRes = await this.userRepository.findOne({
+      select: {
+        id: true,
+        role: true,
+        personalInfo: {
+          email: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      relations: {
+        personalInfo: true,
+      },
       where: {
         id,
       },
     });
     const data = {
-      ...userRes,
-      employee: null,
+      id: userRes.id,
+      email: userRes.personalInfo.email,
+      firstName: userRes.personalInfo.firstName,
+      lastName: userRes.personalInfo.lastName,
+      role: userRes.role,
     };
     return data;
   }
@@ -167,11 +224,8 @@ export class UsersService {
     const res = await this.userRepository.find({
       select: {
         notificationToken: true,
-        firstName: true,
-        lastName: true,
       },
       where: {
-        role: In([ROLE_LIST.COLLECTOR, ROLE_LIST.SHIPPER]),
         notificationToken: Not(''),
         deletedAt: null,
       },

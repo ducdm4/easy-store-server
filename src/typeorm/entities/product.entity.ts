@@ -23,6 +23,9 @@ export class ProductEntity {
   @Column({ nullable: false, type: 'text' })
   description: string;
 
+  @Column({ type: 'tinyint', default: 0 })
+  type: number; // 0: product, 1: topping
+
   @OneToOne(() => PhotoEntity)
   @JoinColumn({ name: 'imageId', referencedColumnName: 'id' })
   image: PhotoEntity;

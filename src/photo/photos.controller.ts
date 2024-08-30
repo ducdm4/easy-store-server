@@ -87,7 +87,7 @@ export class PhotosController {
   }
 
   @Delete(':id')
-  @Roles([ROLE_LIST.ADMIN, ROLE_LIST.OPERATOR])
+  @Roles([ROLE_LIST.ADMIN])
   deletePhotoInfo(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
     const response = this.photosService.deletePhoto(id);
     response.then(

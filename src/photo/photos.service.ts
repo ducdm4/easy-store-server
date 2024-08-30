@@ -50,27 +50,4 @@ export class PhotosService {
       id: In(ids),
     });
   }
-
-  async updatePhotoStation(ids: Array<number>, stationId: number) {
-    const updatePhoto = await this.photoRepository.update(
-      {
-        id: In(ids),
-      },
-      {
-        station: {
-          id: stationId,
-        },
-      },
-    );
-    return updatePhoto;
-  }
-
-  async findPhotoByStation(stationId: number) {
-    const photoList = await this.photoRepository.findBy({
-      station: {
-        id: stationId,
-      },
-    });
-    return photoList;
-  }
 }

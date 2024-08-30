@@ -1,6 +1,4 @@
 import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { UpdateAddressDto } from '../../address/dto/updateAddress.dto';
-import { CreateAddressDto } from '../../address/dto/createAddress.dto';
 
 export class CreateUserDto {
   @IsEmail()
@@ -8,16 +6,22 @@ export class CreateUserDto {
   email: string;
 
   @IsNotEmpty()
+  password: string;
+
+  @IsNotEmpty()
+  rePassword: string;
+
+  @IsNotEmpty()
   firstName: string;
 
   @IsNotEmpty()
   lastName: string;
 
-  role: number;
   phone: string;
   dob: string;
+  address: string;
+  gender: boolean;
   profilePictureId: number;
-  address: CreateAddressDto;
 }
 
 export class UpdateUserDto {
@@ -34,12 +38,9 @@ export class UpdateUserDto {
   phone: string;
   dob: string;
   profilePictureId: number;
-  addressId: number;
-  address: UpdateAddressDto;
 }
 
 export class UpdateUserPayloadDto {
-  address: UpdateAddressDto;
   firstName: string;
   role: number;
   lastName: string;

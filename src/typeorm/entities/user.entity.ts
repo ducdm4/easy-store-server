@@ -26,7 +26,10 @@ export class UserEntity {
   role: number;
 
   @OneToOne(() => PersonalInfoEntity)
-  @JoinColumn({ name: 'personalInfoId', referencedColumnName: 'id' })
+  @JoinColumn({
+    name: 'personalInfoId',
+    referencedColumnName: 'id',
+  })
   personalInfo: PersonalInfoEntity;
 
   @OneToMany(() => StoreEntity, (store) => store.user)

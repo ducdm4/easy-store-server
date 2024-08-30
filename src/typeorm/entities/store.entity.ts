@@ -20,7 +20,10 @@ export class StoreEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false, type: 'text' })
+  @Column({ nullable: false })
+  name: string;
+
+  @Column({ nullable: true, type: 'text' })
   description: string;
 
   @Column({ default: 1 }) // 1: spa, 2: restaurant, 3: pet shop, 4: groceries, 5: pharmacy, 6: other
@@ -34,7 +37,7 @@ export class StoreEntity {
   passCode: string;
 
   @OneToMany(() => PhotoEntity, (photo) => photo.store)
-  photos: PhotoEntity[];
+  photos: PhotoEntity[]; // max 2 photos
 
   @OneToMany(() => SpaceEntity, (space) => space.store)
   spaces: SpaceEntity[];
@@ -57,6 +60,9 @@ export class StoreEntity {
 
   @Column({ default: null })
   youtubeUrl: string;
+
+  @Column({ default: null })
+  address: string;
 
   @CreateDateColumn()
   createdAt: Date;
