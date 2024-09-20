@@ -5,6 +5,7 @@ import { SignInDto } from './dto/signIn.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ROLE_LIST } from 'src/common/constant';
+import { StoresService } from 'src/store/stores.service';
 
 @Injectable()
 export class AuthService {
@@ -12,6 +13,7 @@ export class AuthService {
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<UserEntity>,
     private jwtService: JwtService,
+    private storeService: StoresService,
   ) {}
 
   async signIn(loginInfo: SignInDto) {
@@ -46,10 +48,16 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (isMatch) {
       delete user.password;
+      const storeList = await this.storeService.getStoreByOwnerId(user.id);
       const tokens = await this.getTokens({
         id: user.id,
         role: user.role,
         ...user.personalInfo,
+        storeList: storeList.map((item) => {
+          return {
+            id: item.id,
+          };
+        }),
       });
       return {
         tokens,
@@ -60,6 +68,7 @@ export class AuthService {
           firstName: user.personalInfo.firstName,
           lastName: user.personalInfo.lastName,
         },
+        storeList,
       };
     } else {
       throw new NotFoundException('Incorrect login info');

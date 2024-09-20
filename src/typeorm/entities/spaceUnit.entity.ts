@@ -10,6 +10,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { SpaceEntity } from './space.entity';
+import { SPACE_UNIT_STATUS } from '../../common/constant';
 
 @Entity({ name: 'space-units' })
 export class SpaceUnitEntity {
@@ -25,10 +26,8 @@ export class SpaceUnitEntity {
   @ManyToOne(() => SpaceEntity, (space) => space.spaceUnits)
   space: SpaceEntity;
 
-  @Column({ default: true })
-  active: boolean;
-
-  @Column({ type: 'smallint', default: 1 }) // 0: de-active, 1: available, 2: booked, 3: occupied, 4: merged
+  // 0: de-active, 1: available, 2: booked, 3: occupied, 4: merged
+  @Column({ type: 'smallint', default: SPACE_UNIT_STATUS.AVAILABLE })
   status: number;
 
   @ManyToMany(() => SpaceUnitEntity)

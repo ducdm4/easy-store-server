@@ -37,4 +37,23 @@ export class StoresService {
     await this.storeRepository.save(store);
     return store;
   }
+
+  async getStoreByOwnerId(userId: number) {
+    const store = await this.storeRepository.find({
+      where: {
+        user: {
+          id: userId,
+        },
+      },
+    });
+    return store;
+  }
+
+  async checkStoreOwner(storeList: Array<{ id: string }>, storeId: string) {
+    if (storeList.findIndex((store) => store.id.toString() === storeId) > -1) {
+      return true;
+    } else {
+      throw new BadRequestException('You are not owner of this store');
+    }
+  }
 }

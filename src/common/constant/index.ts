@@ -6,3 +6,11 @@ export const ROLE_LIST = {
 export interface KeyValue {
   [key: string]: any;
 }
+
+export enum SPACE_UNIT_STATUS {
+  DE_ACTIVE,
+  AVAILABLE,
+  BOOKED,
+  OCCUPIED,
+  MERGED,
+} // 0: de-active, 1: available, 2: booked, 3: occupied, 4: merged

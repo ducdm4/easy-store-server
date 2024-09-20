@@ -14,6 +14,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { MailService } from '../mail/mail.service';
 import { AuthService } from '../auth/auth.service';
+import { StoresService } from '../store/stores.service';
 import { ROLE_LIST } from 'src/common/constant';
 import { UserEntity } from '../typeorm/entities/user.entity';
 import { PersonalInfoEntity } from '../typeorm/entities/personalInfo.entity';
@@ -28,6 +29,7 @@ export class UsersService {
     private personalInfoRepository: Repository<PersonalInfoEntity>,
     private mailService: MailService,
     private authService: AuthService,
+    private storeService: StoresService,
   ) {}
   getUser() {
     return this.userRepository.find();
@@ -119,11 +121,11 @@ export class UsersService {
       firstName: newPersonalInfo.firstName,
       lastName: newPersonalInfo.lastName,
       role: newUser.role,
+      storeList: [],
     };
 
     const tokens = await this.authService.getTokens(userInfo);
     return { user: userInfo, tokens };
-    // return '';
   }
 
   async updateUser(id: number, updateUserDetails: UpdateUserDto) {
@@ -204,6 +206,7 @@ export class UsersService {
         id,
       },
     });
+    const storeList = await this.storeService.getStoreByOwnerId(id);
     const data = {
       id: userRes.id,
       email: userRes.personalInfo.email,
@@ -211,7 +214,10 @@ export class UsersService {
       lastName: userRes.personalInfo.lastName,
       role: userRes.role,
     };
-    return data;
+    return {
+      user: data,
+      storeList,
+    };
   }
 
   async updateNotificationToken(id: number, token: string) {
