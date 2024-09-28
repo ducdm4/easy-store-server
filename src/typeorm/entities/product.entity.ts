@@ -33,6 +33,9 @@ export class ProductEntity {
   @Column({ default: 0 })
   price: number;
 
+  @Column({ nullable: true })
+  commissionRate: number;
+
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;

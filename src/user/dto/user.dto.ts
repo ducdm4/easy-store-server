@@ -57,3 +57,8 @@ export class ChangePasswordDto {
   @IsString()
   newPassword: string;
 }
+
+export class UserLoggedInDto {
+  id: number;
+  storeList: Array<{ id: string }>;
+}

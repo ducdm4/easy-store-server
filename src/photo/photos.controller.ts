@@ -34,7 +34,7 @@ export class PhotosController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const photoInfo = await this.photosService.getPhotoById(id);
-    open(`upload/${photoInfo.name}`, 'r', (err, fd) => {
+    open(`upload/photo/${photoInfo.name}`, 'r', (err, fd) => {
       if (err) {
         res.status(HttpStatus.NOT_FOUND).json({
           statusCode: HttpStatus.NOT_FOUND,
@@ -44,14 +44,14 @@ export class PhotosController {
       }
     });
     const fileR = createReadStream(
-      join(process.cwd(), `upload/${photoInfo.name}`),
+      join(process.cwd(), `upload/photo/${photoInfo.name}`),
     );
     res.setHeader('Content-Type', photoInfo.mimeType);
     return new StreamableFile(fileR);
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('image', { dest: './upload' }))
+  @UseInterceptors(FileInterceptor('image', { dest: './upload/photo' }))
   createNewPhoto(
     @Req() req: Request,
     @Res() res: Response,

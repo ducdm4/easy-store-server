@@ -9,6 +9,8 @@ import { StoresController } from './store/stores.controller';
 import { PhotosController } from './photo/photos.controller';
 import { ConfigsController } from './config/configs.controller';
 import { SpacesController } from './space/spaces.controller';
+import { EmployeeController } from './employee/employee.controller';
+import { PersonalInfoController } from './personalInfo/personalInfo.controller';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
@@ -19,6 +21,8 @@ import { EventsModule } from './events/events.module';
 import { StoresModule } from './store/stores.module';
 import { TasksModule } from './scheduleTask/scheduleTasks.module';
 import { SpacesModule } from './space/spaces.module';
+import { EmployeeModule } from './employee/employee.module';
+import { PersonalInfoModule } from './personalInfo/personalInfo.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -37,6 +41,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     TasksModule,
     StoresModule,
     SpacesModule,
+    EmployeeModule,
+    PersonalInfoModule,
   ],
   providers: [
     {
@@ -55,6 +61,8 @@ export class AppModule implements NestModule {
         ConfigsController,
         StoresController,
         SpacesController,
+        EmployeeController,
+        PersonalInfoController,
       );
   }
 }
