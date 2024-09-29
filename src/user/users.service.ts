@@ -121,11 +121,10 @@ export class UsersService {
       firstName: newPersonalInfo.firstName,
       lastName: newPersonalInfo.lastName,
       role: newUser.role,
-      storeList: [],
     };
 
     const tokens = await this.authService.getTokens(userInfo);
-    return { user: userInfo, tokens };
+    return { user: userInfo, storeList: [], tokens };
   }
 
   async updateUser(id: number, updateUserDetails: UpdateUserDto) {
@@ -214,10 +213,12 @@ export class UsersService {
       lastName: userRes.personalInfo.lastName,
       role: userRes.role,
     };
-    return {
-      user: data,
+    const returnData = {
+      ...data,
       storeList,
     };
+    const tokens = await this.authService.getTokens(returnData);
+    return { user: data, storeList, tokens };
   }
 
   async updateNotificationToken(id: number, token: string) {

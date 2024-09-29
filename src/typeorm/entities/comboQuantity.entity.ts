@@ -10,6 +10,7 @@ import {
 import { ProductEntity } from './product.entity';
 import { ComboEntity } from './combo.entity';
 
+// combo quantity use to setting the number of products in a combo
 @Entity({ name: 'combo-quantity' })
 export class ComboQuantityEntity {
   @PrimaryGeneratedColumn()

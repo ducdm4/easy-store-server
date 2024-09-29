@@ -3,30 +3,32 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
+import { CustomerEntity } from './customer.entity';
+import { PackagesEntity } from './package.entity';
 
-@Entity({ name: 'spends' })
-export class SpendEntity {
+// add new record to this table each time we have invoice with package
+@Entity({ name: 'package-purchased' })
+export class PackagePurchasedEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @ManyToOne(() => CustomerEntity)
+  customer: CustomerEntity;
+
+  @ManyToOne(() => PackagesEntity)
+  package: PackagesEntity;
+
   @Column({ nullable: false })
-  name: string;
-
-  @Column({ nullable: true, type: 'text' })
-  description: string;
-
-  @Column({ nullable: false })
-  amount: number;
-
-  @Column({ nullable: false, type: 'tinyint' })
-  type: number; // 0: daily spend, 1: salary payment, 2: import goods, 3: other
+  remaining: number;
 
   @ManyToOne(() => StoreEntity)
+  @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;
 
   @CreateDateColumn()

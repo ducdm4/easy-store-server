@@ -274,7 +274,7 @@ export class SpacesService {
         where: { id: params.id },
       });
       if (space) {
-        const res = await this.spaceRepository.remove(space);
+        const res = await this.spaceRepository.softDelete(space);
         return res;
       }
     }
@@ -300,7 +300,7 @@ export class SpacesService {
       spaceUnit.space.store.id.toString(),
     );
     if (storeCheck) {
-      const res = await this.spaceUnitRepository.remove(spaceUnit);
+      const res = await this.spaceUnitRepository.softDelete(spaceUnit);
       return res;
     }
   }

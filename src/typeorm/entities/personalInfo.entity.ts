@@ -27,7 +27,9 @@ export class PersonalInfoEntity {
   @Column({ nullable: true })
   phone: string;
 
-  @OneToOne(() => PhotoEntity)
+  @OneToOne(() => PhotoEntity, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'profilePictureId', referencedColumnName: 'id' })
   profilePicture: PhotoEntity;
 

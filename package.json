@@ -18,8 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "migration:generate": "typeorm-ts-node-esm -d src/database/database.providers.ts migration:generate",
-    "migration:run": "typeorm-ts-node-esm migration:run -d src/database/database.providers.ts"
+    "migration:generate": "typeorm-ts-node-esm -d dist/database/database.providers.js migration:generate",
+    "migration:run": "typeorm-ts-node-esm migration:run -d dist/database/database.providers.js"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.6.1",
@@ -47,7 +47,7 @@
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "typeorm": "^0.3.15"
+    "typeorm": "0.3.20"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",

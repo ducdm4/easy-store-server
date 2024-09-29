@@ -3,31 +3,37 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 
-@Entity({ name: 'spends' })
-export class SpendEntity {
+@Entity({ name: 'packages' })
+export class PackagesEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ nullable: false })
   name: string;
 
-  @Column({ nullable: true, type: 'text' })
+  @Column({ nullable: false, type: 'text' })
   description: string;
 
-  @Column({ nullable: false })
-  amount: number;
+  @Column({ default: 0 })
+  price: number;
 
-  @Column({ nullable: false, type: 'tinyint' })
-  type: number; // 0: daily spend, 1: salary payment, 2: import goods, 3: other
+  @Column({ default: null, nullable: true })
+  expiryTime: number; // number of days, limit the time customer can use the combo
 
   @ManyToOne(() => StoreEntity)
+  @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;
+
+  @Column({ default: 1 })
+  timesCanUse: number;
+  // number of times customer can use the package
 
   @CreateDateColumn()
   createdAt: Date;

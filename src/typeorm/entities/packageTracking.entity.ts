@@ -7,25 +7,18 @@ import {
   UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
-import { ComboEntity } from './combo.entity';
-import { CustomerEntity } from './customer.entity';
+import { PackagePurchasedEntity } from './packagePurchased.entity';
 
-@Entity({ name: 'combo-trackings' })
-export class ComboTrackingEntity {
+@Entity({ name: 'package-tracking' })
+export class PackageTrackingEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => ComboEntity)
-  combo: ComboEntity;
-
-  @ManyToOne(() => CustomerEntity)
-  customer: CustomerEntity;
+  @ManyToOne(() => PackagePurchasedEntity)
+  packagePurchased: PackagePurchasedEntity;
 
   @Column({ nullable: false })
-  quantityUsed: number;
-
-  @Column({ nullable: false })
-  remaining: number;
+  quantityUsed: number; // number used in this time
 
   @CreateDateColumn()
   createdAt: Date;

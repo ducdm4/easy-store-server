@@ -6,7 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { In, Like, Not, Repository } from 'typeorm';
-import { CreateEmployeeDto } from './dto/employee.dto';
+import {
+  CreateEmployeeDto,
+  UpdateEmployeeDto,
+  UpdateEmployeeInfoDto,
+} from './dto/employee.dto';
 import { KeyValue } from 'src/common/constant';
 import { EmployeeInfoEntity } from '../typeorm/entities/employeeInfo.entity';
 import { dataSource } from '../database/database.providers';
@@ -127,6 +131,99 @@ export class EmployeeService {
   }
 
   async getEmployeeDetail(id: string, storeList: Array<{ id: string }>) {
+    const employee = await this.employeeInfoRepository.findOne({
+      where: { id: parseInt(id) },
+      relations: {
+        personalInfo: {
+          profilePicture: true,
+        },
+        identityCardImage1: true,
+        identityCardImage2: true,
+        store: true,
+      },
+    });
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      employee.store.id.toString(),
+    );
+    if (storeCheck) {
+      return employee;
+    }
+  }
+
+  async updateEmployeeDetail(
+    employeeId: string,
+    storeList: Array<{ id: string }>,
+    updateEmployeeData: UpdateEmployeeDto,
+  ) {
+    const employee = await this.employeeInfoRepository.findOne({
+      where: { id: parseInt(employeeId) },
+      relations: {
+        personalInfo: {
+          profilePicture: true,
+        },
+        identityCardImage1: true,
+        identityCardImage2: true,
+        store: true,
+      },
+    });
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      employee.store.id.toString(),
+    );
+    if (storeCheck) {
+      if (updateEmployeeData.personalInfo) {
+        const personalInfo = await this.personalInfoService.updatePersonalInfo(
+          employee.personalInfo.id,
+          updateEmployeeData.personalInfo,
+        );
+        if (personalInfo) {
+          employee.personalInfo = personalInfo;
+          if (updateEmployeeData.employeeInfo) {
+            const employeeInfo = await this.employeeInfoRepository.preload({
+              id: parseInt(employeeId),
+              ...updateEmployeeData.employeeInfo,
+            });
+            if (employeeInfo) {
+              await this.employeeInfoRepository.save(employeeInfo);
+            }
+          }
+        }
+      }
+      return employee;
+    }
+  }
+
+  async deleteEmployee(id: string, storeList: Array<{ id: string }>) {
+    const employee = await this.checkEmployee(id, storeList);
+    if (employee) {
+      await this.personalInfoService.deletePersonalInfo(
+        employee.personalInfo.id,
+      );
+      if (employee.identityCardImage1) {
+        await this.photosService.deletePhoto(
+          employee.identityCardImage1.id.toString(),
+        );
+      }
+      if (employee.identityCardImage2) {
+        await this.photosService.deletePhoto(
+          employee.identityCardImage2.id.toString(),
+        );
+      }
+      await this.employeeInfoRepository.softDelete(parseInt(id));
+      return {
+        message: 'Employee deleted successfully',
+      };
+    }
+  }
+
+  async checkEmployee(id: string, storeList: Array<{ id: string }>) {
     const employee = await this.employeeInfoRepository.findOne({
       where: { id: parseInt(id) },
       relations: {

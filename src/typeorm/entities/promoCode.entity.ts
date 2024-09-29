@@ -16,16 +16,19 @@ export class PromoCodeEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false }) // discount code
   name: string;
 
   @Column({ nullable: true, type: 'text' })
   description: string;
 
-  @Column({ nullable: false })
-  discount: number;
+  @Column({ nullable: true, default: null })
+  quantity: number; // null: unlimited
 
-  @Column({ nullable: true })
+  @Column({ nullable: false })
+  discountType: number; // 0: percent, 1: money
+
+  @Column({ nullable: true, type: 'float' })
   total: number;
 
   @Column({ nullable: true, type: 'datetime', default: null })
@@ -37,11 +40,17 @@ export class PromoCodeEntity {
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;
 
+  @Column({ default: false, type: 'tinyint' })
+  productOrCombo: number; // 0: product, 1: combo, 2: both
+
   @ManyToOne(() => ProductEntity)
-  product: ProductEntity;
+  product: ProductEntity; // specific product to apply, null if apply to all products
 
   @ManyToOne(() => ComboEntity)
-  combo: ComboEntity;
+  combo: ComboEntity; // specific combo to apply, null if apply to all combo
+
+  @Column({ default: false })
+  isAutoApply: boolean; // auto apply when create receipt
 
   @CreateDateColumn()
   createdAt: Date;
