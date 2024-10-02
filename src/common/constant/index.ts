@@ -14,3 +14,13 @@ export enum SPACE_UNIT_STATUS {
   OCCUPIED,
   MERGED,
 } // 0: de-active, 1: available, 2: booked, 3: occupied, 4: merged
+
+export enum PRODUCT_TYPE {
+  PRODUCT,
+  TOPPING,
+}
+
+export enum PRODUCT_COMMISSION_TYPE {
+  PERCENT,
+  MONEY,
+}

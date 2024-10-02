@@ -9,6 +9,8 @@ import {
   ManyToOne,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
+import { ProductEntity } from './product.entity';
+import { ComboEntity } from './combo.entity';
 
 @Entity({ name: 'packages' })
 export class PackagesEntity {
@@ -24,8 +26,15 @@ export class PackagesEntity {
   @Column({ default: 0 })
   price: number;
 
+  // product or combo in the package
+  @ManyToOne(() => ProductEntity)
+  product: ProductEntity;
+
+  @ManyToOne(() => ComboEntity)
+  combo: ComboEntity;
+
   @Column({ default: null, nullable: true })
-  expiryTime: number; // number of days, limit the time customer can use the combo
+  expiryTime: number; // number of days, limit the time customer can use the package
 
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })

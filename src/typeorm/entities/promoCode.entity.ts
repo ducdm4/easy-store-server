@@ -23,13 +23,13 @@ export class PromoCodeEntity {
   description: string;
 
   @Column({ nullable: true, default: null })
-  quantity: number; // null: unlimited
+  quantity: number; // null: unlimited, number of times customer can use this code
 
   @Column({ nullable: false })
   discountType: number; // 0: percent, 1: money
 
   @Column({ nullable: true, type: 'float' })
-  total: number;
+  total: number; // total discount in percent or money base on discountType
 
   @Column({ nullable: true, type: 'datetime', default: null })
   timeStart: string;
@@ -41,7 +41,7 @@ export class PromoCodeEntity {
   store: StoreEntity;
 
   @Column({ default: false, type: 'tinyint' })
-  productOrCombo: number; // 0: product, 1: combo, 2: both
+  productOrCombo: number; // apply for 0: product, 1: combo, 2: both
 
   @ManyToOne(() => ProductEntity)
   product: ProductEntity; // specific product to apply, null if apply to all products

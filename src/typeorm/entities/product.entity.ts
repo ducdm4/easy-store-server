@@ -31,10 +31,13 @@ export class ProductEntity {
   image: PhotoEntity;
 
   @Column({ default: 0 })
-  price: number;
+  price: string;
 
   @Column({ nullable: true })
-  commissionRate: number;
+  commissionRate: string; // rate of commission
+
+  @Column({ nullable: true })
+  commissionType: number; // 0: percent, 1: money
 
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
@@ -42,6 +45,9 @@ export class ProductEntity {
 
   @Column({ nullable: false })
   unit: string;
+
+  @Column({ nullable: false })
+  category: string;
 
   @Column({ nullable: true })
   duration: number;

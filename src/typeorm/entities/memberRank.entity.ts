@@ -18,16 +18,16 @@ export class MemberRankEntity {
   name: string;
 
   @Column({ nullable: true, default: 0, type: 'tinyint' })
-  discount: number;
+  discount: number; // discount from total by percentage
 
   @Column({ nullable: true, default: 0, type: 'tinyint' })
   condition: number; // 0: by total revenue, 1: by receipts, 2: by average avenue in x months
 
   @Column({ nullable: true, default: 0 })
-  requirement1: number;
+  requirement1: number; // number of receipts or revenue to meet the rank
 
   @Column({ nullable: true, default: 0 })
-  requirement2: number;
+  requirement2: number; // number of time (in month) to meet the rank
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;

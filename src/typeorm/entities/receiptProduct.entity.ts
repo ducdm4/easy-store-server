@@ -14,6 +14,7 @@ import { ProductEntity } from './product.entity';
 import { ComboEntity } from './combo.entity';
 import { PromoCodeEntity } from './promoCode.entity';
 import { ReceiptEntity } from './receipt.entity';
+import { PackagesEntity } from './package.entity';
 
 @Entity({ name: 'receiptProducts' })
 export class ReceiptProductEntity {
@@ -28,6 +29,9 @@ export class ReceiptProductEntity {
 
   @ManyToOne(() => ComboEntity)
   combo: ComboEntity;
+
+  @ManyToOne(() => PackagesEntity)
+  package: PackagesEntity;
 
   @Column({ nullable: false })
   quantity: number;

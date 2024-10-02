@@ -17,29 +17,30 @@ import { SpaceUnitEntity } from './spaceUnit.entity';
 import { PromoCodeEntity } from './promoCode.entity';
 import { ReceiptProductEntity } from './receiptProduct.entity';
 import { CustomerEntity } from './customer.entity';
+import { EmployeeInfoEntity } from './employeeInfo.entity';
 
 @Entity({ name: 'receipts' })
 export class ReceiptEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false })
+  @Column({ nullable: false }) // auto generated code: ie TA-300924-001, DI-300924-001
   code: string;
 
   @Column({ nullable: false })
-  subTotal: number;
+  subTotal: number; // total before discount
 
   @Column({ nullable: false })
-  total: number;
+  total: number; // total after discount
 
   @Column({ nullable: true })
-  memberDiscount: number;
+  memberDiscount: number; // discount from member rank
 
   @Column({ nullable: true })
-  extraDiscount: number;
+  extraDiscount: number; // extra discount from owner, employee, ...(by percentage)
 
   @Column({ nullable: true })
-  promoDiscount: number;
+  promoDiscount: number; // discount from promo code
 
   @OneToMany(
     () => ReceiptProductEntity,
@@ -60,7 +61,10 @@ export class ReceiptEntity {
 
   @OneToOne(() => SpaceUnitEntity)
   @JoinColumn()
-  spaceUnit: SpaceUnitEntity;
+  spaceUnit: SpaceUnitEntity; // space unit that customer use
+
+  @ManyToOne(() => EmployeeInfoEntity)
+  createdBy: EmployeeInfoEntity; // employee that create receipt
 
   @CreateDateColumn()
   createdAt: Date;
