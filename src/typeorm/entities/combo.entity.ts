@@ -25,19 +25,30 @@ export class ComboEntity {
   @Column({ nullable: false, type: 'text' })
   description: string;
 
-  @OneToOne(() => PhotoEntity)
+  @OneToOne(() => PhotoEntity, {
+    cascade: true,
+  })
   @JoinColumn({ name: 'imageId', referencedColumnName: 'id' })
   image: PhotoEntity;
 
-  @Column({ default: 0 })
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   price: number;
 
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;
 
-  @OneToMany(() => ComboQuantityEntity, (comboQuantity) => comboQuantity.combo)
+  @OneToMany(
+    () => ComboQuantityEntity,
+    (comboQuantity) => comboQuantity.combo,
+    {
+      cascade: true,
+    },
+  )
   comboQuantity: ComboQuantityEntity[];
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

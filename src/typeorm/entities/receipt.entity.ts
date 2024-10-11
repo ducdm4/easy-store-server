@@ -51,7 +51,7 @@ export class ReceiptEntity {
 
   @ManyToMany(() => PromoCodeEntity)
   @JoinTable()
-  promoCodes: PromoCodeEntity[];
+  promoCodeList: PromoCodeEntity[];
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;

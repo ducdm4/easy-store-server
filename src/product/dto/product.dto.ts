@@ -23,6 +23,9 @@ export class CreateProductDto {
   @IsString()
   unit: string;
 
+  @IsBoolean()
+  isActive: boolean;
+
   duration: number;
   @IsString()
   barcode: string;

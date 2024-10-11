@@ -1,41 +1,66 @@
 import { IsNotEmpty, IsNumber, IsString, IsBoolean } from 'class-validator';
-import {
-  CreatePersonalInfoDto,
-  UpdatePersonalInfoDto,
-} from 'src/personalInfo/dto/personalInfo.dto';
 
-export class CreateEmployeeInfoDto {
+export class CreateComboDto {
   @IsNotEmpty()
-  @IsBoolean()
-  isVerified: boolean;
+  @IsString()
+  name: string;
 
-  identityCardImage1: {
+  @IsString()
+  description: string;
+
+  image: {
     id: number;
   };
 
-  identityCardImage2: {
-    id: number;
-  };
-
-  dayOffPerMonth: number;
-  joinedDate: string;
-  salary: string;
+  price: string;
   store: {
     id: number;
   };
+
+  comboQuantity: Array<CreateComboQuantityDto>;
 }
 
-export class CreateEmployeeDto {
-  employeeInfo: CreateEmployeeInfoDto;
-  personalInfo: CreatePersonalInfoDto;
-}
-
-export class UpdateEmployeeDto {
-  employeeInfo: UpdateEmployeeInfoDto;
-  personalInfo: UpdatePersonalInfoDto;
-}
-
-export class UpdateEmployeeInfoDto extends CreateEmployeeInfoDto {
+class Product {
+  @IsNotEmpty()
   @IsNumber()
   id: number;
+}
+export class CreateComboQuantityDto {
+  @IsNotEmpty()
+  @IsNumber()
+  productUsed: Product;
+
+  @IsNotEmpty()
+  @IsNumber()
+  quantity: number;
+
+  toppingQuantity: Array<CreateComboProductToppingDto>;
+}
+
+export class UpdateComboQuantityDto extends CreateComboQuantityDto {
+  @IsNotEmpty()
+  @IsNumber()
+  id: number;
+
+  toppingQuantity: Array<UpdateComboProductToppingDto>;
+}
+
+export class CreateComboProductToppingDto {
+  product: Product;
+
+  @IsNotEmpty()
+  @IsNumber()
+  quantity: number;
+}
+
+export class UpdateComboProductToppingDto extends CreateComboProductToppingDto {
+  @IsNotEmpty()
+  @IsNumber()
+  id: number;
+}
+
+export class UpdateComboDto extends CreateComboDto {
+  @IsNumber()
+  id: number;
+  comboQuantity: Array<UpdateComboQuantityDto>;
 }

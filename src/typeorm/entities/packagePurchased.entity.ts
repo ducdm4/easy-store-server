@@ -24,8 +24,8 @@ export class PackagePurchasedEntity {
   @ManyToOne(() => PackagesEntity)
   package: PackagesEntity;
 
-  @Column({ nullable: false })
-  remaining: number;
+  @Column({ type: 'datetime', nullable: false })
+  purchasedAt: Date;
 
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })

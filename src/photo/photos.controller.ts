@@ -37,7 +37,7 @@ export class PhotosController {
     open(`upload/photo/${photoInfo.name}`, 'r', (err, fd) => {
       if (err) {
         res.status(HttpStatus.NOT_FOUND).json({
-          statusCode: HttpStatus.NOT_FOUND,
+          code: HttpStatus.NOT_FOUND,
           data: {},
           message: `Photo ${photoInfo.name} has been deleted`,
         });
@@ -73,13 +73,13 @@ export class PhotosController {
       const response = this.photosService.createPhoto(file);
       response.then((photoData) => {
         res.status(HttpStatus.OK).json({
-          statusCode: HttpStatus.OK,
+          code: HttpStatus.OK,
           data: { photoInfo: photoData },
         });
       });
     } else {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
         data: {},
         message: 'unknown error',
       });
@@ -93,13 +93,13 @@ export class PhotosController {
     response.then(
       (data) => {
         res.status(HttpStatus.OK).json({
-          statusCode: HttpStatus.OK,
+          code: HttpStatus.OK,
           data: {},
         });
       },
       (fail) => {
         res.status(fail.getStatus()).json({
-          statusCode: fail.getStatus(),
+          code: fail.getStatus(),
           message: 'Photo not found',
           data: {},
         });

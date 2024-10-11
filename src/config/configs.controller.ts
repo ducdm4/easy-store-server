@@ -6,6 +6,7 @@ import {
   Query,
   Req,
   Res,
+  UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -14,6 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { ROLE_LIST } from 'src/common/constant';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 
 @Controller('configs')
 export class ConfigsController {
@@ -22,19 +24,24 @@ export class ConfigsController {
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/')
   @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
   async findAllByStore(
     @Query() data: { key: string; storeId: number },
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const user = req.user as UserLoggedInDto;
-    const config = await this.configService.getValueByKey(
-      data.key,
-      true,
-      data.storeId,
-      user.storeList,
-    );
+    try {
+      const user = req.user as UserLoggedInDto;
+      const config = await this.configService.getValueByKey(
+        data.key,
+        true,
+        data.storeId,
+        user.storeList,
+      );
 
-    res.status(HttpStatus.OK).json({ data: config });
+      res.status(HttpStatus.OK).json({ data: config });
+    } catch (e) {
+      throw e;
+    }
   }
 }

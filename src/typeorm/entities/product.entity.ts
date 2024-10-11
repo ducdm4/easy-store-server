@@ -30,11 +30,11 @@ export class ProductEntity {
   @JoinColumn({ name: 'imageId', referencedColumnName: 'id' })
   image: PhotoEntity;
 
-  @Column({ default: 0 })
-  price: string;
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  price: number;
 
-  @Column({ nullable: true })
-  commissionRate: string; // rate of commission
+  @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })
+  commissionRate: number; // rate of commission
 
   @Column({ nullable: true })
   commissionType: number; // 0: percent, 1: money
@@ -54,6 +54,9 @@ export class ProductEntity {
 
   @Column({ nullable: true })
   barcode: string;
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

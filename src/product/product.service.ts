@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { In, Like, Not, Repository } from 'typeorm';
 import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
-import { KeyValue } from 'src/common/constant';
+import { KeyValue, PRODUCT_TYPE } from 'src/common/constant';
 import { ProductEntity } from '../typeorm/entities/product.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
@@ -39,14 +39,24 @@ export class ProductService {
       await this.updateProductConfig('category', data);
 
       if (!data.image?.id) delete data.image;
-      const product = await this.productRepository.save(data);
+      const dataToSave = {
+        ...data,
+        price: parseFloat(data.price),
+        commissionRate: parseFloat(data.commissionRate),
+      };
+
+      const product = await this.productRepository.save(dataToSave);
       return product;
     }
     return '';
   }
 
   async updateProductConfig(key: string, data: CreateProductDto) {
-    const current = await this.configService.getValueByKey(key, false);
+    const current = await this.configService.getValueByKey(
+      key,
+      false,
+      data.store.id,
+    );
 
     let newList = [];
     if (current) {
@@ -65,6 +75,23 @@ export class ProductService {
     );
   }
 
+  async getAllProduct(storeId: number, storeList: Array<{ id: string }>) {
+    const storeCheck = this.storesService.checkStoreOwner(
+      storeList,
+      storeId.toString(),
+    );
+    if (storeCheck) {
+      const productList = await this.productRepository.find({
+        where: {
+          store: {
+            id: storeId,
+          },
+        },
+      });
+      return productList;
+    }
+  }
+
   async getListProduct(
     storeId: string,
     storeList: Array<{ id: string }>,
@@ -75,7 +102,7 @@ export class ProductService {
       storeId,
     );
     if (storeCheck) {
-      const productQuery = await dataSource
+      const productQuery = dataSource
         .createQueryBuilder()
         .select([
           'product.id',
@@ -84,14 +111,24 @@ export class ProductService {
           'product.type',
           'product.unit',
           'product.category',
+          'image.id',
         ])
         .from(ProductEntity, 'product')
-        .where('product.storeId = :storeId', { storeId })
-        .skip((findOptions.paging.page - 1) * findOptions.paging.size)
-        .take(findOptions.paging.size);
+        .leftJoin('product.image', 'image')
+        .where('product.storeId = :storeId', { storeId });
+      if (findOptions.paging.page !== 0) {
+        productQuery.skip(
+          (findOptions.paging.page - 1) * findOptions.paging.size,
+        );
+        productQuery.take(findOptions.paging.size);
+      }
       if (findOptions.sort.length) {
         findOptions.sort.forEach((sort) => {
-          productQuery.orderBy(sort.key, sort.value);
+          if (sort.key === 'price') {
+            productQuery.orderBy('product.price * 1', sort.value);
+          } else {
+            productQuery.orderBy(sort.key, sort.value);
+          }
         });
       }
       if (findOptions.keyword) {
@@ -105,12 +142,12 @@ export class ProductService {
       if (findOptions.filter.length) {
         findOptions.filter.forEach((fil) => {
           if (fil.key === 'category') {
-            productQuery.andWhere('product.category = :category', {
+            productQuery.andWhere('product.category IN (:...category)', {
               category: fil.value,
             });
           }
           if (fil.key === 'unit') {
-            productQuery.andWhere('product.unit = :unit', {
+            productQuery.andWhere('product.unit IN (:...unit)', {
               unit: fil.value,
             });
           }
@@ -135,6 +172,10 @@ export class ProductService {
     storeId: number,
     storeList: Array<{ id: string }>,
   ) {
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      storeId.toString(),
+    );
     const product = await this.productRepository.findOne({
       relations: {
         image: true,
@@ -145,10 +186,7 @@ export class ProductService {
     if (!product) {
       throw new NotFoundException('Product not exist');
     }
-    const storeCheck = this.storesService.checkStoreOwner(
-      storeList,
-      storeId.toString(),
-    );
+
     if (storeCheck) {
       return product;
     }
@@ -202,8 +240,36 @@ export class ProductService {
       await this.updateProductConfig('category', data);
 
       if (!data.image?.id) delete data.image;
-      await this.productRepository.save(data);
+      const dataToSave = {
+        ...data,
+        price: parseFloat(data.price),
+        commissionRate: parseFloat(data.commissionRate),
+      };
+      await this.productRepository.save(dataToSave);
       return true;
+    }
+    return '';
+  }
+
+  async getToppingList(storeId: number, storeList: Array<{ id: string }>) {
+    const storeCheck = this.storesService.checkStoreOwner(
+      storeList,
+      storeId.toString(),
+    );
+    if (storeCheck) {
+      const toppingList = await this.productRepository.find({
+        relations: {
+          image: true,
+        },
+        where: {
+          type: PRODUCT_TYPE.TOPPING,
+          store: {
+            id: storeId,
+          },
+          isActive: true,
+        },
+      });
+      return toppingList;
     }
     return '';
   }

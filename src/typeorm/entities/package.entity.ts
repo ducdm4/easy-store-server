@@ -7,10 +7,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
-import { ProductEntity } from './product.entity';
-import { ComboEntity } from './combo.entity';
+import { PackageProductQuantityEntity } from './packageProductQuantity.entity';
 
 @Entity({ name: 'packages' })
 export class PackagesEntity {
@@ -23,15 +23,17 @@ export class PackagesEntity {
   @Column({ nullable: false, type: 'text' })
   description: string;
 
-  @Column({ default: 0 })
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   price: number;
 
-  // product or combo in the package
-  @ManyToOne(() => ProductEntity)
-  product: ProductEntity;
-
-  @ManyToOne(() => ComboEntity)
-  combo: ComboEntity;
+  @OneToMany(
+    () => PackageProductQuantityEntity,
+    (packageProduct) => packageProduct.package,
+    {
+      cascade: true,
+    },
+  )
+  packageProductQuantity: PackageProductQuantityEntity[];
 
   @Column({ default: null, nullable: true })
   expiryTime: number; // number of days, limit the time customer can use the package
@@ -43,6 +45,9 @@ export class PackagesEntity {
   @Column({ default: 1 })
   timesCanUse: number;
   // number of times customer can use the package
+
+  @Column({ default: true })
+  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

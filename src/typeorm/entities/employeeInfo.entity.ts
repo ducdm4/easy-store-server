@@ -24,20 +24,18 @@ export class EmployeeInfoEntity {
   @Column({ default: false })
   isActive: boolean;
 
-  @OneToOne(() => PhotoEntity, {
-    onDelete: 'CASCADE',
-  })
+  @OneToOne(() => PhotoEntity, { cascade: true })
   @JoinColumn({
     name: 'identityCardImage1Id',
     referencedColumnName: 'id',
   })
   identityCardImage1: PhotoEntity;
 
-  @OneToOne(() => PhotoEntity, { cascade: ['soft-remove'] })
+  @OneToOne(() => PhotoEntity, { cascade: true })
   @JoinColumn({ name: 'identityCardImage2Id', referencedColumnName: 'id' })
   identityCardImage2: PhotoEntity;
 
-  @OneToOne(() => PersonalInfoEntity, { cascade: ['soft-remove'] })
+  @OneToOne(() => PersonalInfoEntity, { cascade: true })
   @JoinColumn({ name: 'personalInfoId', referencedColumnName: 'id' })
   personalInfo: PersonalInfoEntity;
 

@@ -11,6 +11,7 @@ import { ProductProviders } from '../typeorm/providers/product.providers';
 import { UserProviders } from '../typeorm/providers/user.providers';
 import { PersonalInfoProviders } from '../typeorm/providers/personalInfo.providers';
 import { ComboProviders } from '../typeorm/providers/combo.providers';
+import { ComboQuantityProviders } from '../typeorm/providers/comboQuantity.providers';
 
 @Module({
   imports: [DatabaseModule],
@@ -22,6 +23,7 @@ import { ComboProviders } from '../typeorm/providers/combo.providers';
     ...UserProviders,
     ...ComboProviders,
     ...PersonalInfoProviders,
+    ...ComboQuantityProviders,
     ComboService,
     StoresService,
     PhotosService,

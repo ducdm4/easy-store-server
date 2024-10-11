@@ -40,7 +40,7 @@ export class ConfigsService {
     storeId?: number,
     storeList?: Array<{ id: string }>,
   ) {
-    let check = needCheck;
+    let check = !needCheck;
     if (needCheck) {
       check = await this.storeService.checkStoreOwner(
         storeList,
@@ -48,7 +48,6 @@ export class ConfigsService {
       );
     }
 
-    console.log('name', name);
     if (check) {
       const res = await this.configRepository.findOne({
         where: {

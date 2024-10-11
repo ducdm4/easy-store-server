@@ -8,42 +8,22 @@ import {
   ManyToOne,
   ManyToMany,
   JoinTable,
-  OneToMany,
 } from 'typeorm';
-import { StoreEntity } from './store.entity';
 import { ProductEntity } from './product.entity';
-import { ComboEntity } from './combo.entity';
 import { PromoCodeEntity } from './promoCode.entity';
-import { ReceiptEntity } from './receipt.entity';
-import { PackagesEntity } from './package.entity';
-import { ReceiptProductToppingEntity } from './receiptProductTopping.entity';
+import { ReceiptProductEntity } from './receiptProduct.entity';
 
-@Entity({ name: 'receipt-products' })
-export class ReceiptProductEntity {
+@Entity({ name: 'receipt-product-topping' })
+export class ReceiptProductToppingEntity {
+  // to store the topping info of a product in a receipt product
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => ReceiptEntity)
-  receipt: ReceiptEntity;
+  @ManyToOne(() => ReceiptProductEntity)
+  receiptProduct: ReceiptProductEntity;
 
   @ManyToOne(() => ProductEntity)
-  product: ProductEntity;
-
-  @ManyToOne(() => ComboEntity)
-  combo: ComboEntity;
-
-  @ManyToOne(() => PackagesEntity)
-  package: PackagesEntity;
-
-  @OneToMany(
-    () => ReceiptProductToppingEntity,
-    (receiptProductToppingQuantity) =>
-      receiptProductToppingQuantity.receiptProduct,
-    {
-      cascade: true,
-    },
-  )
-  topping: ReceiptProductToppingEntity[];
+  product: ProductEntity; // id of topping product
 
   @Column({ nullable: false })
   quantity: number;

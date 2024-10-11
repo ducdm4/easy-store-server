@@ -8,6 +8,8 @@ import {
   Body,
   UseInterceptors,
   ClassSerializerInterceptor,
+  UseFilters,
+  HttpException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -15,6 +17,7 @@ import { Request, Response } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshTokenDto } from './dto/refreshToken.dto';
 import { UsersService } from 'src/user/users.service';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('auth')
@@ -30,7 +33,7 @@ export class AuthController {
   async login(@Req() req: Request, @Res() res: Response) {
     const data = req.user;
     res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
+      code: HttpStatus.OK,
       data,
     });
   }
@@ -45,13 +48,14 @@ export class AuthController {
     const { id } = refreshTokenDto;
     const tokens = req.user;
     res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
+      code: HttpStatus.OK,
       data: { tokens },
     });
   }
 
   @Post('verify')
   @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
   async verifyUser(@Req() req: Request, @Res() res: Response) {
     const user: Express.User = req.user;
     if (user) {
@@ -60,14 +64,11 @@ export class AuthController {
         user['role'],
       );
       res.status(HttpStatus.OK).json({
-        statusCode: HttpStatus.OK,
+        code: HttpStatus.OK,
         data: response,
       });
     } else {
-      res.status(HttpStatus.UNAUTHORIZED).json({
-        statusCode: HttpStatus.UNAUTHORIZED,
-        data: {},
-      });
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
   }
 }

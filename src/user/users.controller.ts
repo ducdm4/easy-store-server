@@ -11,6 +11,7 @@ import {
   Req,
   Res,
   Sse,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -25,6 +26,7 @@ import { UsersPipe } from './pipes/users.pipe';
 import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ROLE_LIST } from '../common/constant';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -33,6 +35,7 @@ export class UsersController {
 
   @Roles([ROLE_LIST.ADMIN])
   @Get()
+  @UseFilters(new HttpExceptionFilter())
   findAll() {
     return this.userService.getUser();
   }
@@ -40,6 +43,7 @@ export class UsersController {
   @Roles([ROLE_LIST.ADMIN])
   @Get('detail/:id')
   @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
   findUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findUserById(id);
   }
@@ -50,7 +54,7 @@ export class UsersController {
     const user = req.user;
     const userInfo = await this.userService.findSelfUser(user);
     res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
+      code: HttpStatus.OK,
       data: {
         userInfo,
       },
@@ -65,24 +69,20 @@ export class UsersController {
   }
 
   @Post('register')
+  @UseFilters(new HttpExceptionFilter())
   async selfRegisterUser(
     @Body('', UsersPipe) createUserDto: CreateUserDto,
     @Res() res: Response,
   ) {
-    const user = await this.userService.addUser(
-      createUserDto,
-      createUserDto.password,
-    );
-    res.status(HttpStatus.OK).json({ data: user });
-  }
-
-  @Put('detail/:id')
-  @Roles([ROLE_LIST.ADMIN])
-  updateUserById(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserPayloadDto: UpdateUserPayloadDto,
-  ) {
-    // this.userService.updateUser(id, updateUserPayloadDto);
+    try {
+      const user = await this.userService.addUser(
+        createUserDto,
+        createUserDto.password,
+      );
+      res.status(HttpStatus.OK).json({ data: user });
+    } catch (e) {
+      throw e;
+    }
   }
 
   @Put('change-password')
@@ -95,7 +95,7 @@ export class UsersController {
     const user = req.user;
     const response = await this.userService.updatePassword(passwordInfo, user);
     res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
+      code: HttpStatus.OK,
       data: {
         response,
       },
@@ -117,7 +117,7 @@ export class UsersController {
       req.user['id'],
     );
     res.status(HttpStatus.OK).json({
-      statusCode: HttpStatus.OK,
+      code: HttpStatus.OK,
       data: {
         userInfo,
       },
@@ -137,7 +137,7 @@ export class UsersController {
     response.then(
       (data) => {
         res.status(HttpStatus.OK).json({
-          statusCode: HttpStatus.OK,
+          code: HttpStatus.OK,
           data: data,
         });
       },
@@ -145,8 +145,7 @@ export class UsersController {
         res
           .status(fail.getStatus === 'function' ? fail.getStatus() : 500)
           .json({
-            statusCode:
-              typeof fail.getStatus === 'function' ? fail.getStatus() : 500,
+            code: typeof fail.getStatus === 'function' ? fail.getStatus() : 500,
             message: 'Something went wrong',
             data: {},
           });

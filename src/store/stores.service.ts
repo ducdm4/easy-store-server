@@ -1,8 +1,12 @@
 import {
   BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   InternalServerErrorException,
+  UseFilters,
 } from '@nestjs/common';
 import { In, Not, Repository } from 'typeorm';
 import {
@@ -16,6 +20,8 @@ import { ROLE_LIST } from 'src/common/constant';
 import { UserEntity } from '../typeorm/entities/user.entity';
 import { StoreEntity } from '../typeorm/entities/store.entity';
 import { dataSource } from '../database/database.providers';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { error } from 'console';
 
 @Injectable()
 export class StoresService {
@@ -53,7 +59,7 @@ export class StoresService {
     if (storeList.findIndex((store) => store.id.toString() === storeId) > -1) {
       return true;
     } else {
-      throw new BadRequestException('You are not owner of this store');
+      throw new ForbiddenException('You are not owner of this store');
     }
   }
 }

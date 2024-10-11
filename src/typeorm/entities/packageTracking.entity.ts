@@ -6,8 +6,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { PackagePurchasedEntity } from './packagePurchased.entity';
+import { PackageTrackingProductEntity } from './packageTrackingProduct.entity';
 
 @Entity({ name: 'package-tracking' })
 export class PackageTrackingEntity {
@@ -17,8 +19,14 @@ export class PackageTrackingEntity {
   @ManyToOne(() => PackagePurchasedEntity)
   packagePurchased: PackagePurchasedEntity;
 
-  @Column({ nullable: false })
-  quantityUsed: number; // number used in this time
+  @OneToMany(
+    () => PackageTrackingProductEntity,
+    (packageTrackingProduct) => packageTrackingProduct.packageTracking,
+  )
+  packageTrackingProduct: PackageTrackingProductEntity[];
+
+  @Column({ type: 'datetime', nullable: false })
+  usedAt: Date;
 
   @CreateDateColumn()
   createdAt: Date;
