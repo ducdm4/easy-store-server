@@ -28,11 +28,8 @@ export class PackageProductQuantityEntity {
   @ManyToOne(() => ComboEntity)
   combo: ComboEntity;
 
-  @Column({ default: 1 })
+  @Column({ default: 1, type: 'decimal', precision: 5, scale: 1 })
   quantity: number;
-
-  @Column({ default: true })
-  isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

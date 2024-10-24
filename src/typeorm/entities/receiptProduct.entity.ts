@@ -45,7 +45,7 @@ export class ReceiptProductEntity {
   )
   topping: ReceiptProductToppingEntity[];
 
-  @Column({ nullable: false })
+  @Column({ default: 1, type: 'decimal', precision: 5, scale: 1 })
   quantity: number;
 
   @Column({ nullable: false })

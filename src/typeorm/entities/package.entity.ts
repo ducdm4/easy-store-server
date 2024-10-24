@@ -8,9 +8,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 import { PackageProductQuantityEntity } from './packageProductQuantity.entity';
+import { PhotoEntity } from './photo.entity';
 
 @Entity({ name: 'packages' })
 export class PackagesEntity {
@@ -41,6 +43,12 @@ export class PackagesEntity {
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;
+
+  @OneToOne(() => PhotoEntity, {
+    cascade: true,
+  })
+  @JoinColumn({ name: 'imageId', referencedColumnName: 'id' })
+  image: PhotoEntity;
 
   @Column({ default: 1 })
   timesCanUse: number;

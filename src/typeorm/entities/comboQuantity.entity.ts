@@ -24,7 +24,7 @@ export class ComboQuantityEntity {
   @ManyToOne(() => ProductEntity)
   productUsed: ProductEntity; // product in the combo
 
-  @Column({ nullable: false })
+  @Column({ default: 1, type: 'decimal', precision: 5, scale: 1 })
   quantity: number;
 
   @OneToMany(

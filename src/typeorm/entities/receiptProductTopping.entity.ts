@@ -25,7 +25,7 @@ export class ReceiptProductToppingEntity {
   @ManyToOne(() => ProductEntity)
   product: ProductEntity; // id of topping product
 
-  @Column({ nullable: false })
+  @Column({ default: 1, type: 'decimal', precision: 5, scale: 1 })
   quantity: number;
 
   @Column({ nullable: false })

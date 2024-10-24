@@ -26,7 +26,7 @@ export class ProductEntity {
   @Column({ type: 'tinyint', default: 0 })
   type: number; // 0: product, 1: topping
 
-  @OneToOne(() => PhotoEntity)
+  @OneToOne(() => PhotoEntity, { cascade: true })
   @JoinColumn({ name: 'imageId', referencedColumnName: 'id' })
   image: PhotoEntity;
 

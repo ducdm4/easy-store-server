@@ -1,41 +1,44 @@
 import { IsNotEmpty, IsNumber, IsString, IsBoolean } from 'class-validator';
-import {
-  CreatePersonalInfoDto,
-  UpdatePersonalInfoDto,
-} from 'src/personalInfo/dto/personalInfo.dto';
 
-export class CreateEmployeeInfoDto {
+export class CreatePackageDto {
   @IsNotEmpty()
-  @IsBoolean()
-  isVerified: boolean;
+  @IsString()
+  name: string;
 
-  identityCardImage1: {
-    id: number;
-  };
+  @IsString()
+  description: string;
 
-  identityCardImage2: {
-    id: number;
-  };
+  @IsNumber()
+  expiryTime: number;
 
-  dayOffPerMonth: number;
-  joinedDate: string;
-  salary: string;
+  @IsNumber()
+  timesCanUse: number;
+
+  price: string;
   store: {
     id: number;
   };
+  image: {
+    id: number;
+  };
+
+  packageProductQuantity: Array<CreatePackageProductDto>;
 }
 
-export class CreateEmployeeDto {
-  employeeInfo: CreateEmployeeInfoDto;
-  personalInfo: CreatePersonalInfoDto;
+class BasicID {
+  @IsNumber()
+  id: number;
 }
 
-export class UpdateEmployeeDto {
-  employeeInfo: UpdateEmployeeInfoDto;
-  personalInfo: UpdatePersonalInfoDto;
+export class CreatePackageProductDto {
+  product: BasicID;
+  combo: BasicID;
+
+  @IsNumber()
+  quantity: number;
 }
 
-export class UpdateEmployeeInfoDto extends CreateEmployeeInfoDto {
+export class UpdatePackageDto extends CreatePackageDto {
   @IsNumber()
   id: number;
 }

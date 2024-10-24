@@ -1,21 +1,11 @@
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { In, Like, Not, Repository } from 'typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { CreateComboDto, UpdateComboDto } from './dto/combo.dto';
-import { KeyValue } from 'src/common/constant';
 import { ComboEntity } from '../typeorm/entities/combo.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
-import { PhotosService } from '../photo/photos.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
-import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { ComboQuantityEntity } from 'src/typeorm/entities/comboQuantity.entity';
-import { ComboProductToppingEntity } from 'src/typeorm/entities/comboProductTopping.entity';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
 
 @Injectable()
@@ -23,8 +13,9 @@ export class ComboService {
   constructor(
     @Inject('COMBO_REPOSITORY')
     private comboRepository: Repository<ComboEntity>,
+    @Inject('COMBO_QUANTITY_REPOSITORY')
+    private comboQuantityRepository: Repository<ComboQuantityEntity>,
     private storesService: StoresService,
-    private photosService: PhotosService,
   ) {}
 
   async createNewCombo(data: CreateComboDto, storeList: Array<{ id: string }>) {
@@ -233,6 +224,10 @@ export class ComboService {
     const combo = await this.comboRepository.findOne({
       relations: {
         store: true,
+        image: true,
+        comboQuantity: {
+          toppingQuantity: true,
+        },
       },
       where: {
         id,
@@ -246,9 +241,31 @@ export class ComboService {
         combo.store.id.toString(),
       );
       if (storeCheck) {
-        await this.comboRepository.softDelete(combo);
+        await this.comboRepository.softRemove(combo);
         return true;
       }
+    }
+  }
+
+  async getAllByStoreId(storeId: number, storeList: Array<{ id: string }>) {
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      storeId.toString(),
+    );
+    if (storeCheck) {
+      const combo = await this.comboRepository.find({
+        relations: {
+          store: true,
+          image: true,
+        },
+        where: {
+          store: {
+            id: storeId,
+          },
+          isActive: true,
+        },
+      });
+      return combo;
     }
   }
 }

@@ -7,13 +7,11 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Put,
   Req,
   Res,
-  Sse,
   UseFilters,
   UseGuards,
   UseInterceptors,
@@ -23,7 +21,7 @@ import { Response, Request } from 'express';
 import { ComboService } from './combo.service';
 import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
-import { KeyValue, ROLE_LIST } from '../common/constant';
+import { ROLE_LIST } from '../common/constant';
 import { getFilterObject } from 'src/common/function';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
@@ -86,6 +84,27 @@ export class ComboController {
       const user = req.user as UserLoggedInDto;
       const combo = await this.comboService.getComboById(
         params.id,
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: combo });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Get('/all/:storeId')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
+  async getAllCombo(
+    @Param() params: { storeId: number },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const combo = await this.comboService.getAllByStoreId(
+        params.storeId,
         user.storeList,
       );
       res.status(HttpStatus.OK).json({ data: combo });

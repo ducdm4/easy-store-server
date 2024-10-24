@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ClassSerializerInterceptor,
   Controller,
@@ -13,14 +14,11 @@ import {
   Req,
   Res,
   Sse,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  CreateEmployeeDto,
-  UpdateEmployeeDto,
-  UpdateEmployeeInfoDto,
-} from './dto/packages.dto';
+import { CreatePackageDto, UpdatePackageDto } from './dto/packages.dto';
 import { Response, Request } from 'express';
 import { PackagesService } from './packages.service';
 import { Roles } from '../common/decorator/roles.decorator';
@@ -28,26 +26,137 @@ import { AuthGuard } from '@nestjs/passport';
 import { KeyValue, ROLE_LIST } from '../common/constant';
 import { getFilterObject } from 'src/common/function';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
+import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 
 @Controller('packages')
 @UseInterceptors(ClassSerializerInterceptor)
 export class PackagesController {
-  constructor(private readonly comboService: PackagesService) {}
+  constructor(private readonly packageService: PackagesService) {}
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Post('/')
   @UseGuards(AuthGuard('jwt'))
-  async addEmployee(
-    @Body() createEmployeeData: CreateEmployeeDto,
+  @UseFilters(new HttpExceptionFilter())
+  async addPackage(
+    @Body() createPackageData: CreatePackageDto,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    // const user = req.user as UserLoggedInDto;
-    // console.log('createEmployeeData', createEmployeeData);
-    // const employee = await this.employeeService.addNewEmployee(
-    //   createEmployeeData,
-    //   user,
-    // );
-    // res.status(HttpStatus.OK).json({ data: employee });
+    try {
+      const user = req.user as UserLoggedInDto;
+      const newPackage = await this.packageService.createNewPackage(
+        createPackageData,
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: newPackage });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Get('/')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
+  async getListPackageFiltered(@Req() req: Request, @Res() res: Response) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const filterOption = getFilterObject(req);
+      const packageList = await this.packageService.getListPackage(
+        req.query['storeId'].toString(),
+        user.storeList,
+        filterOption,
+      );
+      res.status(HttpStatus.OK).json({ data: packageList });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Get('/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
+  async getPackageInfo(
+    @Param() params: { id: number },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const packageInfo = await this.packageService.getPackageById(
+        params.id,
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: packageInfo });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Put('/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
+  async updatePackageInfo(
+    @Param() params: { id: string },
+    @Body() updatePackageData: UpdatePackageDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    if (parseInt(params.id) !== updatePackageData.id) {
+      throw new BadRequestException('Invalid request');
+    }
+    try {
+      const user = req.user as UserLoggedInDto;
+      const packageInfo = await this.packageService.updatePackageInfo(
+        updatePackageData,
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: packageInfo });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Patch('/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
+  async updatePackageStatus(
+    @Param() params: { id: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const packageInfo = await this.packageService.updatePackageStatus(
+        parseInt(params.id),
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: packageInfo });
+    } catch (e) {
+      throw e;
+    }
+  }
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Delete('/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UseFilters(new HttpExceptionFilter())
+  async deletePackage(
+    @Param() params: { id: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const packageInfo = await this.packageService.deletePackage(
+        parseInt(params.id),
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: packageInfo });
+    } catch (e) {
+      throw e;
+    }
   }
 }

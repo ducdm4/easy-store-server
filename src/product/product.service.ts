@@ -1,19 +1,12 @@
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { In, Like, Not, Repository } from 'typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { CreateProductDto, UpdateProductDto } from './dto/product.dto';
-import { KeyValue, PRODUCT_TYPE } from 'src/common/constant';
+import { PRODUCT_TYPE } from 'src/common/constant';
 import { ProductEntity } from '../typeorm/entities/product.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
 import { PhotosService } from '../photo/photos.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
-import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { ConfigsService } from 'src/config/configs.service';
 
 @Injectable()
@@ -82,10 +75,14 @@ export class ProductService {
     );
     if (storeCheck) {
       const productList = await this.productRepository.find({
+        relations: {
+          image: true,
+        },
         where: {
           store: {
             id: storeId,
           },
+          isActive: true,
         },
       });
       return productList;
@@ -213,7 +210,7 @@ export class ProductService {
       storeId.toString(),
     );
     if (storeCheck) {
-      return await this.productRepository.softDelete(product.id);
+      return await this.productRepository.softRemove(product);
     }
     return '';
   }
