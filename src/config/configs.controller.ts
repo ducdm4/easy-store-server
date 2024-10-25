@@ -16,6 +16,7 @@ import { Roles } from 'src/common/decorator/roles.decorator';
 import { ROLE_LIST } from 'src/common/constant';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('configs')
 export class ConfigsController {
@@ -23,7 +24,7 @@ export class ConfigsController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async findAllByStore(
     @Query() data: { key: string; storeId: number },

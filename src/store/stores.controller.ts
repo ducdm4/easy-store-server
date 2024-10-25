@@ -17,6 +17,7 @@ import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ROLE_LIST } from '../common/constant';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('stores')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -25,7 +26,7 @@ export class StoresController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async registerStore(
     @Body() createStoreData: CreateStoreDto,

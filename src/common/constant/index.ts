@@ -1,6 +1,7 @@
 export const ROLE_LIST = {
   ADMIN: 1,
   STORE_OWNER: 2,
+  STORE_SALE: 3,
 };
 
 export interface KeyValue {

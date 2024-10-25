@@ -1,8 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { In, Not, Repository } from 'typeorm';
 import {
@@ -187,7 +192,7 @@ export class UsersService {
     return userLoggedInfo;
   }
 
-  async getUserVerified(id: number, role: number) {
+  async getUserVerified(id: number) {
     const userRes = await this.userRepository.findOne({
       select: {
         id: true,
@@ -238,5 +243,61 @@ export class UsersService {
       },
     });
     return res;
+  }
+
+  async getSaleUserVerified(userId: number, role: number, storeId: number) {
+    const userRes = await this.userRepository.findOne({
+      select: {
+        id: true,
+        role: true,
+      },
+      where: {
+        id: userId,
+      },
+    });
+    if (!userRes) {
+      throw new NotFoundException('User not found');
+    }
+    const storeList = await this.storeService.getStoreByOwnerId(userId);
+    if (!storeId) {
+      // check user role request the verify
+      if (role === ROLE_LIST.STORE_OWNER) {
+        throw new BadRequestException('Please choose store first');
+      } else {
+        throw new UnauthorizedException(
+          'Please sign in with store owner account',
+        );
+      }
+    } else {
+      // check store belong to user
+      const check = this.storeService.checkStoreOwner(
+        storeList.map((store) => {
+          return {
+            id: store.id.toString(),
+          };
+        }),
+        storeId.toString(),
+      );
+      if (!check) {
+        throw new ForbiddenException('Store not belong to user');
+      }
+      const tokens = await this.authService.getTokens({
+        id: userId,
+        role: ROLE_LIST.STORE_SALE,
+        store: storeId,
+      });
+      const store = storeList.find((store) => store.id === storeId);
+      return {
+        tokens,
+        user: {
+          id: userId,
+          role: ROLE_LIST.STORE_SALE,
+        },
+        store: {
+          id: storeId,
+          name: store.name,
+        },
+      };
+    }
   }
 }

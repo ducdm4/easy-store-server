@@ -37,5 +37,6 @@ import { StoreProviders } from '../typeorm/providers/store.providers';
     MailService,
     StoresService,
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}

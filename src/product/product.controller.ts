@@ -23,6 +23,7 @@ import { KeyValue, ROLE_LIST } from '../common/constant';
 import { getFilterObject } from 'src/common/function';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('products')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -31,7 +32,7 @@ export class ProductController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Post('')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async addNewProduct(
     @Body() createProductData: CreateProductDto,
@@ -52,7 +53,7 @@ export class ProductController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async getListProductFiltered(@Req() req: Request, @Res() res: Response) {
     try {
@@ -72,7 +73,7 @@ export class ProductController {
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/:storeId/:id')
   @UseFilters(new HttpExceptionFilter())
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   async getProductInfo(
     @Param() params: KeyValue,
     @Req() req: Request,
@@ -93,7 +94,7 @@ export class ProductController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Put('/:storeId/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async updateProductInfo(
     @Body() data: UpdateProductDto,
@@ -114,7 +115,7 @@ export class ProductController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Delete('/:storeId/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async deleteProductInfo(
     @Param() params: { id: number; storeId: number },
@@ -136,7 +137,7 @@ export class ProductController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/topping/list/:storeId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async getStoreToppingList(
     @Param() params: { storeId: number },
@@ -157,7 +158,7 @@ export class ProductController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/list/all/:storeId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async getAllStoreProduct(
     @Param() params: { storeId: number },

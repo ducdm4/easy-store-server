@@ -53,12 +53,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ComboModule,
     PackagesModule,
   ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
-  ],
+  providers: [],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

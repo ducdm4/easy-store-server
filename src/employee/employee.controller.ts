@@ -22,6 +22,7 @@ import { KeyValue, ROLE_LIST } from '../common/constant';
 import { getFilterObject } from 'src/common/function';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('employee')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -30,7 +31,7 @@ export class EmployeeController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Post('/')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async addEmployee(
     @Body() createEmployeeData: CreateEmployeeDto,
@@ -51,7 +52,7 @@ export class EmployeeController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async getListEmployeeFiltered(@Req() req: Request, @Res() res: Response) {
     try {
@@ -70,7 +71,7 @@ export class EmployeeController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async getEmployeeDetail(@Req() req: Request, @Res() res: Response) {
     try {
@@ -87,7 +88,7 @@ export class EmployeeController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Put('/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async updateEmployeeDetail(
     @Body() updateEmployeeData: UpdateEmployeeDto,
@@ -109,7 +110,7 @@ export class EmployeeController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Delete('/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async deleteEmployeeDetail(
     @Body() updateEmployeeData: UpdateEmployeeDto,

@@ -28,6 +28,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { KeyValue, ROLE_LIST } from '../common/constant';
 import { getFilterObject } from 'src/common/function';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('spaces')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -36,7 +37,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Post('/group')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async addSpaceGroup(
     @Body() createSpaceData: CreateSpaceDto,
@@ -57,7 +58,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/group/all/:storeId')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async listAllSpaceGroup(
     @Param() params: KeyValue,
@@ -78,7 +79,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Patch('/group/:storeId/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async patchSpaceGroup(
     @Param() params: KeyValue,
@@ -99,7 +100,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Put('/group/:storeId/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async editSpaceGroup(
     @Param() params: KeyValue,
@@ -122,7 +123,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Delete('/group/:storeId/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async deleteSpaceGroup(
     @Param() params: KeyValue,
@@ -140,7 +141,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Delete('/unit/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async deleteSpaceUnit(
     @Param() params: KeyValue,
@@ -158,7 +159,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Post('/unit')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async addSpaceUnit(
     @Body() createSpaceData: CreateSpaceUnitDto,
@@ -177,9 +178,9 @@ export class SpacesController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.ADMIN])
   @Get('/group')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async listSpaceGroup(@Req() req: Request, @Res() res: Response) {
     try {
@@ -196,9 +197,9 @@ export class SpacesController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.ADMIN])
   @Get('/unit')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async listSpaceUnit(@Req() req: Request, @Res() res: Response) {
     try {
@@ -217,7 +218,7 @@ export class SpacesController {
 
   @Roles([ROLE_LIST.STORE_OWNER])
   @Put('/unit/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   async editSpaceUnit(
     @Param() params: KeyValue,

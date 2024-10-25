@@ -34,6 +34,12 @@ export class ComboEntity {
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   price: number;
 
+  @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })
+  commissionRate: number; // rate of commission
+
+  @Column({ nullable: true })
+  commissionType: number; // 0: percent, 1: money
+
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;

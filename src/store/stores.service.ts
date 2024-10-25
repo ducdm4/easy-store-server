@@ -62,4 +62,28 @@ export class StoresService {
       throw new ForbiddenException('You are not owner of this store');
     }
   }
+
+  async getStoreInfo(id: number) {
+    const store = await this.storeRepository.findOne({
+      select: {
+        id: true,
+        passCode: true,
+        name: true,
+        address: true,
+        description: true,
+        paymentDate: true,
+        hotline: true,
+        facebookUrl: true,
+        tiktokUrl: true,
+        youtubeUrl: true,
+        logoPicture: {
+          id: true,
+        },
+      },
+      where: {
+        id,
+      },
+    });
+    return store;
+  }
 }

@@ -1,4 +1,10 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserEntity } from '../typeorm/entities/user.entity';
 import { Repository } from 'typeorm';
 import { SignInDto } from './dto/signIn.dto';
@@ -6,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ROLE_LIST } from 'src/common/constant';
 import { StoresService } from 'src/store/stores.service';
+import { UsersService } from 'src/user/users.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +21,8 @@ export class AuthService {
     private userRepository: Repository<UserEntity>,
     private jwtService: JwtService,
     private storeService: StoresService,
+    @Inject(forwardRef(() => UsersService))
+    private userService: UsersService,
   ) {}
 
   async signIn(loginInfo: SignInDto) {
@@ -72,6 +81,40 @@ export class AuthService {
       };
     } else {
       throw new NotFoundException('Incorrect login info');
+    }
+  }
+
+  async switchRole(
+    user: { id: number; storeList?: Array<{ id: string }>; role: number },
+    data: { passCode: string; storeId: number },
+  ) {
+    if (user.role === ROLE_LIST.STORE_OWNER) {
+      const storeCheck = this.storeService.checkStoreOwner(
+        user.storeList,
+        data.storeId.toString(),
+      );
+      if (storeCheck) {
+        const tokens = await this.getTokens({
+          id: user.id,
+          role: ROLE_LIST.STORE_SALE,
+          store: data.storeId,
+        });
+        return {
+          tokens,
+          user: {
+            id: user.id,
+            role: user.role,
+          },
+          store: data.storeId,
+        };
+      }
+    } else if (user.role === ROLE_LIST.STORE_SALE) {
+      const store = await this.storeService.getStoreInfo(data.storeId);
+      if (store.passCode === data.passCode) {
+        return await this.userService.getUserVerified(user.id);
+      } else {
+        throw new BadRequestException('Incorrect passcode');
+      }
     }
   }
 

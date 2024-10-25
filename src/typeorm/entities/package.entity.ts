@@ -37,6 +37,12 @@ export class PackagesEntity {
   )
   packageProductQuantity: PackageProductQuantityEntity[];
 
+  @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })
+  commissionRate: number; // rate of commission
+
+  @Column({ nullable: true })
+  commissionType: number; // 0: percent, 1: money
+
   @Column({ default: null, nullable: true })
   expiryTime: number; // number of days, limit the time customer can use the package
 

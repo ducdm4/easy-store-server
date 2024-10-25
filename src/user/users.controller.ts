@@ -27,6 +27,7 @@ import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ROLE_LIST } from '../common/constant';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
+import { RolesGuard } from 'src/common/guard/roles.guard';
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -42,7 +43,7 @@ export class UsersController {
 
   @Roles([ROLE_LIST.ADMIN])
   @Get('detail/:id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
   findUserById(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findUserById(id);
