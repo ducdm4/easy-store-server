@@ -31,7 +31,10 @@ export class ProductEntity {
   image: PhotoEntity;
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
-  price: number;
+  originalPrice: number; // price before
+
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  price: number; // sale price
 
   @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })
   commissionRate: number; // rate of commission
@@ -57,6 +60,15 @@ export class ProductEntity {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ default: true })
+  isStorable: boolean;
+
+  @Column({ default: true })
+  isSaleable: boolean;
+
+  @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })
+  inStock: number;
 
   @CreateDateColumn()
   createdAt: Date;

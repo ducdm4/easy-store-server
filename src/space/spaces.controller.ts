@@ -178,7 +178,7 @@ export class SpacesController {
     }
   }
 
-  @Roles([ROLE_LIST.ADMIN])
+  @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/group')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -197,7 +197,7 @@ export class SpacesController {
     }
   }
 
-  @Roles([ROLE_LIST.ADMIN])
+  @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/unit')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())

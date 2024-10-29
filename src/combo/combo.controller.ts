@@ -159,6 +159,7 @@ export class ComboController {
       throw e;
     }
   }
+
   @Roles([ROLE_LIST.STORE_OWNER])
   @Delete('/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)

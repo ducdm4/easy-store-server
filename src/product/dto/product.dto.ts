@@ -13,6 +13,7 @@ export class CreateProductDto {
     id: number;
   };
 
+  originalPrice: string;
   price: string;
 
   commissionRate: string;

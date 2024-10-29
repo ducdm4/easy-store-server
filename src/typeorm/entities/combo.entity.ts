@@ -32,6 +32,9 @@ export class ComboEntity {
   image: PhotoEntity;
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  originalPrice: number; // price before
+
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   price: number;
 
   @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })

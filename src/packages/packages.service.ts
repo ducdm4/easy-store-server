@@ -38,12 +38,16 @@ export class PackagesService {
       const newPackage = this.packagesRepository.create({
         name: data.name,
         description: data.description,
-        price: parseFloat(data.price),
         store: { id: data.store.id },
         timesCanUse: data.timesCanUse,
         expiryTime: data.expiryTime,
         image: data.image ? { id: data.image.id } : null,
         packageProductQuantity: data.packageProductQuantity,
+        price: data.price ? parseFloat(data.price) : 0,
+        commissionRate: data.commissionRate
+          ? parseFloat(data.commissionRate)
+          : null,
+        originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
       });
       await this.packagesRepository.save(newPackage);
       return newPackage;
@@ -221,7 +225,13 @@ export class PackagesService {
         const newPackage = {
           ...packageInfo,
           ...data,
-          price: parseFloat(data.price),
+          price: data.price ? parseFloat(data.price) : 0,
+          commissionRate: data.commissionRate
+            ? parseFloat(data.commissionRate)
+            : null,
+          originalPrice: data.originalPrice
+            ? parseFloat(data.originalPrice)
+            : 0,
         };
 
         if (!newPackage.image || !newPackage.image.id) {

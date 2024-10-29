@@ -28,9 +28,13 @@ export class ComboService {
         name: data.name,
         description: data.description,
         image: data.image ? { id: data.image.id } : null,
-        price: parseFloat(data.price),
         store: { id: data.store.id },
         comboQuantity: data.comboQuantity,
+        price: data.price ? parseFloat(data.price) : 0,
+        commissionRate: data.commissionRate
+          ? parseFloat(data.commissionRate)
+          : null,
+        originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
       });
       await this.comboRepository.save(combo);
       return combo;
@@ -179,7 +183,13 @@ export class ComboService {
         const newCombo = {
           ...combo,
           ...data,
-          price: parseFloat(data.price),
+          price: data.price ? parseFloat(data.price) : 0,
+          commissionRate: data.commissionRate
+            ? parseFloat(data.commissionRate)
+            : null,
+          originalPrice: data.originalPrice
+            ? parseFloat(data.originalPrice)
+            : 0,
         };
 
         if (!newCombo.image || !newCombo.image.id) {

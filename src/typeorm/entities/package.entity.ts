@@ -26,6 +26,9 @@ export class PackagesEntity {
   description: string;
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  originalPrice: number; // price before
+
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   price: number;
 
   @OneToMany(

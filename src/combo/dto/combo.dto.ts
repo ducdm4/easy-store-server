@@ -12,6 +12,10 @@ export class CreateComboDto {
     id: number;
   };
 
+  originalPrice: string;
+  commissionRate: string;
+  @IsNumber()
+  commissionType: number;
   price: string;
   store: {
     id: number;

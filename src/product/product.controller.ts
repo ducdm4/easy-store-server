@@ -6,6 +6,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
   Req,
@@ -172,6 +173,27 @@ export class ProductController {
         user.storeList,
       );
       res.status(HttpStatus.OK).json({ data: productList });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Patch('/:id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async updateProductStatus(
+    @Param() params: { id: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const product = await this.productService.updateProductStatus(
+        parseInt(params.id),
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: product });
     } catch (e) {
       throw e;
     }

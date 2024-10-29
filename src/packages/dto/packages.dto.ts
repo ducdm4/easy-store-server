@@ -8,6 +8,11 @@ export class CreatePackageDto {
   @IsString()
   description: string;
 
+  originalPrice: string;
+  commissionRate: string;
+  @IsNumber()
+  commissionType: number;
+
   @IsNumber()
   expiryTime: number;
 

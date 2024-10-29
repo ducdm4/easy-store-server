@@ -34,8 +34,11 @@ export class ProductService {
       if (!data.image?.id) delete data.image;
       const dataToSave = {
         ...data,
-        price: parseFloat(data.price),
-        commissionRate: parseFloat(data.commissionRate),
+        price: data.price ? parseFloat(data.price) : 0,
+        originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
+        commissionRate: data.commissionRate
+          ? parseFloat(data.commissionRate)
+          : null,
       };
 
       const product = await this.productRepository.save(dataToSave);
@@ -61,7 +64,7 @@ export class ProductService {
       newList = [data[key]];
     }
 
-    const newListAdded = await this.configService.updateValueByKey(
+    await this.configService.updateValueByKey(
       key,
       newList.join('|'),
       data.store.id,
@@ -108,6 +111,8 @@ export class ProductService {
           'product.type',
           'product.unit',
           'product.category',
+          'product.isActive',
+          'product.isStorable',
           'image.id',
         ])
         .from(ProductEntity, 'product')
@@ -239,8 +244,11 @@ export class ProductService {
       if (!data.image?.id) delete data.image;
       const dataToSave = {
         ...data,
-        price: parseFloat(data.price),
-        commissionRate: parseFloat(data.commissionRate),
+        price: data.price ? parseFloat(data.price) : 0,
+        originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
+        commissionRate: data.commissionRate
+          ? parseFloat(data.commissionRate)
+          : null,
       };
       await this.productRepository.save(dataToSave);
       return true;
@@ -269,5 +277,47 @@ export class ProductService {
       return toppingList;
     }
     return '';
+  }
+
+  async updateProductStatus(id: number, storeList: Array<{ id: string }>) {
+    const product = await this.productRepository.findOne({
+      relations: {
+        store: true,
+      },
+      where: {
+        id,
+      },
+    });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    } else {
+      const storeCheck = await this.storesService.checkStoreOwner(
+        storeList,
+        product.store.id.toString(),
+      );
+      if (storeCheck) {
+        const newProduct = {
+          ...product,
+          isActive: !product.isActive,
+        };
+        await this.productRepository.save(newProduct);
+        return newProduct;
+      }
+    }
+  }
+
+  async getSingleProductForChecking(id: number) {
+    const product = await this.productRepository.findOne({
+      relations: {
+        store: true,
+      },
+      where: {
+        id,
+      },
+    });
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+    return product;
   }
 }
