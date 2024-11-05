@@ -17,4 +17,7 @@ export class CreateTransactionsDto {
 
   @IsNumber()
   quantity: number;
+
+  @IsString()
+  date: string;
 }

@@ -5,7 +5,7 @@ import { PRODUCT_TYPE } from 'src/common/constant';
 import { ProductEntity } from '../typeorm/entities/product.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
-import { PhotosService } from '../photo/photos.service';
+import { ProductInStockDailyService } from './productInStockDaily.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
 import { ConfigsService } from 'src/config/configs.service';
 
@@ -15,7 +15,7 @@ export class ProductService {
     @Inject('PRODUCT_REPOSITORY')
     private productRepository: Repository<ProductEntity>,
     private storesService: StoresService,
-    private photosService: PhotosService,
+    private productInStockDailyService: ProductInStockDailyService,
     private configService: ConfigsService,
   ) {}
 
@@ -188,9 +188,36 @@ export class ProductService {
     if (!product) {
       throw new NotFoundException('Product not exist');
     }
+    const inStock = await this.productInStockDailyService.getInStockForProduct(
+      id,
+    );
 
     if (storeCheck) {
-      return product;
+      return {
+        ...product,
+        inStock: inStock ? parseFloat(inStock.quantity.toString()) : 0,
+      };
+    }
+    return '';
+  }
+
+  async getProductInStock(
+    id: number,
+    storeId: number,
+    storeList: Array<{ id: string }>,
+  ) {
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      storeId.toString(),
+    );
+    const inStock = await this.productInStockDailyService.getInStockForProduct(
+      id,
+    );
+
+    if (storeCheck) {
+      return {
+        inStock: inStock ? parseFloat(inStock.quantity.toString()) : 0,
+      };
     }
     return '';
   }

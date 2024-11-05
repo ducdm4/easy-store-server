@@ -94,6 +94,28 @@ export class ProductController {
   }
 
   @Roles([ROLE_LIST.STORE_OWNER])
+  @Get('/:storeId/:id/in-stock')
+  @UseFilters(new HttpExceptionFilter())
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  async getProductInStock(
+    @Param() params: KeyValue,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const product = await this.productService.getProductInStock(
+        params.id,
+        params.storeId,
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: product });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
   @Put('/:storeId/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())

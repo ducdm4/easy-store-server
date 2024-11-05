@@ -251,7 +251,7 @@ export class ComboService {
         combo.store.id.toString(),
       );
       if (storeCheck) {
-        await this.comboRepository.softRemove(combo);
+        await this.comboRepository.softDelete(combo);
         return true;
       }
     }

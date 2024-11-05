@@ -14,10 +14,9 @@ import { PersonalInfoController } from './personalInfo/personalInfo.controller';
 import { ProductController } from './product/product.controller';
 import { ComboController } from './combo/combo.controller';
 import { PackagesController } from './packages/packages.controller';
+import { ProductTransactionsController } from './productTransactions/productTransactions.controller';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
-import { RolesGuard } from './common/guard/roles.guard';
 import { DatabaseModule } from './database/database.module';
 import { MailModule } from './mail/mail.module';
 import { EventsModule } from './events/events.module';
@@ -29,6 +28,7 @@ import { PersonalInfoModule } from './personalInfo/personalInfo.module';
 import { ProductModule } from './product/product.module';
 import { ComboModule } from './combo/combo.module';
 import { PackagesModule } from './packages/packages.module';
+import { ProductTransactionsModule } from './productTransactions/productTransactions.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -52,6 +52,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ProductModule,
     ComboModule,
     PackagesModule,
+    ProductTransactionsModule,
   ],
   providers: [],
 })
@@ -70,6 +71,7 @@ export class AppModule implements NestModule {
         ProductController,
         ComboController,
         PackagesController,
+        ProductTransactionsController,
       );
   }
 }

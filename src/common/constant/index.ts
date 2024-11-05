@@ -16,6 +16,11 @@ export enum SPACE_UNIT_STATUS {
   MERGED,
 } // 0: de-active, 1: available, 2: booked, 3: occupied, 4: merged
 
+export enum TRANSACTIONS_TYPE {
+  IMPORT,
+  EXPORT,
+}
+
 export enum PRODUCT_TYPE {
   PRODUCT,
   TOPPING,

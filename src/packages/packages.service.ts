@@ -1,20 +1,12 @@
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { In, Like, Not, Repository } from 'typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Repository } from 'typeorm';
 import { CreatePackageDto, UpdatePackageDto } from './dto/packages.dto';
 import { KeyValue } from 'src/common/constant';
 import { PackagesEntity } from '../typeorm/entities/package.entity';
 import { PackageProductQuantityEntity } from '../typeorm/entities/packageProductQuantity.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
-import { PhotosService } from '../photo/photos.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
-import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
 import { ComboEntity } from 'src/typeorm/entities/combo.entity';
 

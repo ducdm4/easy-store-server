@@ -8,9 +8,12 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { PhotoEntity } from './photo.entity';
 import { StoreEntity } from './store.entity';
+import { ProductInStockDailyEntity } from './productInStockDaily.entity';
+import { ProductTransactionsEntity } from './productTransactions.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -67,8 +70,23 @@ export class ProductEntity {
   @Column({ default: true })
   isSaleable: boolean;
 
-  @Column({ nullable: true, type: 'decimal', precision: 11, scale: 2 })
-  inStock: number;
+  @OneToMany(
+    () => ProductInStockDailyEntity,
+    (productInStock) => productInStock.product,
+    {
+      cascade: true,
+    },
+  )
+  productInStock: ProductInStockDailyEntity[];
+
+  @OneToMany(
+    () => ProductTransactionsEntity,
+    (productTransactions) => productTransactions.product,
+    {
+      cascade: true,
+    },
+  )
+  productTransactions: ProductTransactionsEntity[];
 
   @CreateDateColumn()
   createdAt: Date;
