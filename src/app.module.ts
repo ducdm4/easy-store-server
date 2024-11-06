@@ -12,6 +12,7 @@ import { SpacesController } from './space/spaces.controller';
 import { EmployeeController } from './employee/employee.controller';
 import { PersonalInfoController } from './personalInfo/personalInfo.controller';
 import { ProductController } from './product/product.controller';
+import { MoneyTransactionsController } from './moneyTransactions/moneyTransactions.controller';
 import { ComboController } from './combo/combo.controller';
 import { PackagesController } from './packages/packages.controller';
 import { ProductTransactionsController } from './productTransactions/productTransactions.controller';
@@ -26,6 +27,7 @@ import { SpacesModule } from './space/spaces.module';
 import { EmployeeModule } from './employee/employee.module';
 import { PersonalInfoModule } from './personalInfo/personalInfo.module';
 import { ProductModule } from './product/product.module';
+import { MoneyTransactionsModule } from './moneyTransactions/moneyTransactions.module';
 import { ComboModule } from './combo/combo.module';
 import { PackagesModule } from './packages/packages.module';
 import { ProductTransactionsModule } from './productTransactions/productTransactions.module';
@@ -53,6 +55,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ComboModule,
     PackagesModule,
     ProductTransactionsModule,
+    MoneyTransactionsModule,
   ],
   providers: [],
 })
@@ -72,6 +75,7 @@ export class AppModule implements NestModule {
         ComboController,
         PackagesController,
         ProductTransactionsController,
+        MoneyTransactionsController,
       );
   }
 }

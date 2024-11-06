@@ -6,10 +6,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 import { ProductEntity } from './product.entity';
 import { ComboEntity } from './combo.entity';
+import { PackagesEntity } from './package.entity';
 
 @Entity({ name: 'promo-codes' })
 export class PromoCodeEntity {
@@ -17,7 +20,7 @@ export class PromoCodeEntity {
   id: number;
 
   @Column({ nullable: false }) // discount code
-  name: string;
+  code: string;
 
   @Column({ nullable: true, type: 'text' })
   description: string;
@@ -32,25 +35,34 @@ export class PromoCodeEntity {
   total: number; // total discount in percent or money base on discountType
 
   @Column({ nullable: true, type: 'datetime', default: null })
-  timeStart: string;
+  timeStart: Date;
 
   @Column({ nullable: true, type: 'datetime', default: null })
-  timeEnd: string;
+  timeEnd: Date;
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;
 
   @Column({ default: false, type: 'tinyint' })
-  productOrCombo: number; // apply for 0: product, 1: combo, 2: both
+  type: number; // apply for 0: product, 1: combo, 2: package, 3: whole receipt
 
-  @ManyToOne(() => ProductEntity)
-  product: ProductEntity; // specific product to apply, null if apply to all products
+  @ManyToMany(() => ProductEntity)
+  @JoinTable()
+  products: ProductEntity[]; // specific product to apply
 
-  @ManyToOne(() => ComboEntity)
-  combo: ComboEntity; // specific combo to apply, null if apply to all combo
+  @ManyToMany(() => ComboEntity)
+  @JoinTable()
+  combos: ComboEntity[]; // specific combo to apply
+
+  @ManyToMany(() => PackagesEntity)
+  @JoinTable()
+  packages: PackagesEntity[]; // specific package to apply
 
   @Column({ default: false })
   isAutoApply: boolean; // auto apply when create receipt
+
+  @Column({ default: false })
+  isPaused: boolean; // in case needed to pause the promo code
 
   @CreateDateColumn()
   createdAt: Date;

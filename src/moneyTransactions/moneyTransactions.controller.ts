@@ -6,27 +6,27 @@ import {
   HttpStatus,
   Param,
   Post,
-  Query,
   Req,
   Res,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ProductTransactionsService } from './productTransactions.service';
+import { MoneyTransactionsService } from './moneyTransactions.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/common/decorator/roles.decorator';
 import { ROLE_LIST } from 'src/common/constant';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 import { RolesGuard } from 'src/common/guard/roles.guard';
-import { CreateTransactionsDto } from './productTransactions.dto';
+import { CreateTransactionsDto } from './dto/moneyTransactions.dto';
 import { getFilterObject } from 'src/common/function';
+import moment from 'moment';
 
-@Controller('product-transactions')
-export class ProductTransactionsController {
+@Controller('money-transactions')
+export class MoneyTransactionsController {
   constructor(
-    private readonly transactionsService: ProductTransactionsService,
+    private readonly moneyTransactionsService: MoneyTransactionsService,
   ) {}
 
   @Roles([ROLE_LIST.STORE_OWNER])
@@ -40,10 +40,11 @@ export class ProductTransactionsController {
   ) {
     try {
       const user = req.user as UserLoggedInDto;
-      const transaction = await this.transactionsService.createNewTransaction(
-        data,
-        user.storeList,
-      );
+      const transaction =
+        await this.moneyTransactionsService.createNewTransaction(
+          data,
+          user.storeList,
+        );
 
       res.status(HttpStatus.OK).json({ data: transaction });
     } catch (e) {
@@ -60,12 +61,33 @@ export class ProductTransactionsController {
       const user = req.user as UserLoggedInDto;
       const filterOption = getFilterObject(req);
       const transactionsList =
-        await this.transactionsService.getListTransaction(
+        await this.moneyTransactionsService.getListTransaction(
           req.query['storeId'].toString(),
           user.storeList,
           filterOption,
         );
       res.status(HttpStatus.OK).json({ data: transactionsList });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER])
+  @Get('/balance/:id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async getCurrentBalance(
+    @Param() params: { id: number },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const balance = await this.moneyTransactionsService.getCurrentBalance(
+        params.id,
+        user.storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: balance });
     } catch (e) {
       throw e;
     }
@@ -82,7 +104,7 @@ export class ProductTransactionsController {
   ) {
     try {
       const user = req.user as UserLoggedInDto;
-      const response = await this.transactionsService.deleteTransaction(
+      const response = await this.moneyTransactionsService.deleteTransaction(
         data.id,
         user.storeList,
       );

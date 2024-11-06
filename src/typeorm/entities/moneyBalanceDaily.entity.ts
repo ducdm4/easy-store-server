@@ -3,28 +3,22 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
-  ManyToOne,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 
-@Entity({ name: 'spends' })
-export class SpendEntity {
+@Entity({ name: 'money-balance-daily' })
+export class MoneyBalanceDailyEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false })
-  name: string;
+  @Column({ default: 0, type: 'decimal', precision: 14, scale: 2 })
+  balance: number;
 
-  @Column({ nullable: true, type: 'text' })
-  description: string;
-
-  @Column({ nullable: false })
-  amount: number;
-
-  @Column({ nullable: false, type: 'tinyint' })
-  type: number; // 0: daily spend, 1: salary payment, 2: import goods, 3: other
+  @Column({ type: 'date' })
+  date: Date;
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;
