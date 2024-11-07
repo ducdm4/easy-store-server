@@ -45,4 +45,7 @@ export class ConfigsController {
       throw e;
     }
   }
+
+  // TODO: config for calculate revenue to point
+  // TODO: config for time to hold promo code
 }

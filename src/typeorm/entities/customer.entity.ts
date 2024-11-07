@@ -29,6 +29,9 @@ export class CustomerEntity {
   @JoinColumn({ name: 'rankId', referencedColumnName: 'id' })
   rank: MemberRankEntity;
 
+  @Column({ type: 'integer', default: 0 })
+  point: number; //TODO: need config in store to define how many revenue to get 1 point
+
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;
 

@@ -18,6 +18,7 @@ import { PromoCodeEntity } from './promoCode.entity';
 import { ReceiptProductEntity } from './receiptProduct.entity';
 import { CustomerEntity } from './customer.entity';
 import { EmployeeInfoEntity } from './employeeInfo.entity';
+import { PromoCampaignsEntity } from './promoCampaigns.entity';
 
 @Entity({ name: 'receipts' })
 export class ReceiptEntity {
@@ -34,13 +35,10 @@ export class ReceiptEntity {
   total: number; // total after discount
 
   @Column({ nullable: true })
-  memberDiscount: number; // discount from member rank
-
-  @Column({ nullable: true })
   extraDiscount: number; // extra discount from owner, employee, ...(by percentage)
 
   @Column({ nullable: true })
-  promoDiscount: number; // discount from promo code
+  pointRewarded: number; // point rewarded from this receipt
 
   @OneToMany(
     () => ReceiptProductEntity,
@@ -52,6 +50,13 @@ export class ReceiptEntity {
   @ManyToMany(() => PromoCodeEntity)
   @JoinTable()
   promoCodeList: PromoCodeEntity[];
+
+  @ManyToMany(() => PromoCampaignsEntity)
+  @JoinTable()
+  promoCampaignList: PromoCampaignsEntity[];
+
+  @Column({ nullable: true })
+  promoDiscount: number; // discount from promo code
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;

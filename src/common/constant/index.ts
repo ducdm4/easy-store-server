@@ -30,3 +30,11 @@ export enum PRODUCT_COMMISSION_TYPE {
   PERCENT,
   MONEY,
 }
+
+export enum PROMO_TYPE {
+  PRODUCT,
+  COMBO,
+  PACKAGE,
+  WHOLE_RECEIPT,
+  BONUS,
+}

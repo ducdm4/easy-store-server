@@ -19,7 +19,8 @@ export class PromoCodeEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ nullable: false }) // discount code
+  @Column({ unique: true })
+  // discount code, can be null in case of auto applied
   code: string;
 
   @Column({ nullable: true, type: 'text' })
@@ -28,11 +29,11 @@ export class PromoCodeEntity {
   @Column({ nullable: true, default: null })
   quantity: number; // null: unlimited, number of times customer can use this code
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   discountType: number; // 0: percent, 1: money
 
-  @Column({ nullable: true, type: 'float' })
-  total: number; // total discount in percent or money base on discountType
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  discountAmount: number; // total discount in percent or money base on discountType
 
   @Column({ nullable: true, type: 'datetime', default: null })
   timeStart: Date;
@@ -42,9 +43,6 @@ export class PromoCodeEntity {
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;
-
-  @Column({ default: false, type: 'tinyint' })
-  type: number; // apply for 0: product, 1: combo, 2: package, 3: whole receipt
 
   @ManyToMany(() => ProductEntity)
   @JoinTable()
@@ -58,8 +56,8 @@ export class PromoCodeEntity {
   @JoinTable()
   packages: PackagesEntity[]; // specific package to apply
 
-  @Column({ default: false })
-  isAutoApply: boolean; // auto apply when create receipt
+  @Column({ default: true })
+  canUseWithOther: boolean; // can be use with other promo code or campaign
 
   @Column({ default: false })
   isPaused: boolean; // in case needed to pause the promo code
