@@ -29,6 +29,9 @@ export class PromoCodeEntity {
   @Column({ nullable: true, default: null })
   quantity: number; // null: unlimited, number of times customer can use this code
 
+  @Column({ nullable: true, default: 0 })
+  numbersUsed: number; // number of code used
+
   @Column({ nullable: true })
   discountType: number; // 0: percent, 1: money
 
@@ -44,17 +47,17 @@ export class PromoCodeEntity {
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;
 
-  @ManyToMany(() => ProductEntity)
-  @JoinTable()
-  products: ProductEntity[]; // specific product to apply
+  @Column({ nullable: true, default: null })
+  itemQuantity: number;
 
-  @ManyToMany(() => ComboEntity)
-  @JoinTable()
-  combos: ComboEntity[]; // specific combo to apply
+  @ManyToOne(() => ProductEntity)
+  product: ProductEntity; // specific product to apply
 
-  @ManyToMany(() => PackagesEntity)
-  @JoinTable()
-  packages: PackagesEntity[]; // specific package to apply
+  @ManyToOne(() => ComboEntity)
+  combo: ComboEntity; // specific combo to apply
+
+  @ManyToOne(() => PackagesEntity)
+  package: PackagesEntity; // specific package to apply
 
   @Column({ default: true })
   canUseWithOther: boolean; // can be use with other promo code or campaign

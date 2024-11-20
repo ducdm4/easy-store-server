@@ -7,18 +7,14 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
-  ManyToMany,
-  JoinTable,
   OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 import { SpaceUnitEntity } from './spaceUnit.entity';
-import { PromoCodeEntity } from './promoCode.entity';
 import { ReceiptProductEntity } from './receiptProduct.entity';
 import { CustomerEntity } from './customer.entity';
 import { EmployeeInfoEntity } from './employeeInfo.entity';
-import { PromoCampaignsEntity } from './promoCampaigns.entity';
 
 @Entity({ name: 'receipts' })
 export class ReceiptEntity {
@@ -28,10 +24,10 @@ export class ReceiptEntity {
   @Column({ nullable: false }) // auto generated code: ie TA-300924-001, DI-300924-001
   code: string;
 
-  @Column({ nullable: false })
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   subTotal: number; // total before discount
 
-  @Column({ nullable: false })
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   total: number; // total after discount
 
   @Column({ nullable: true })
@@ -46,17 +42,6 @@ export class ReceiptEntity {
     { cascade: true },
   )
   receiptProducts: ReceiptProductEntity[];
-
-  @ManyToMany(() => PromoCodeEntity)
-  @JoinTable()
-  promoCodeList: PromoCodeEntity[];
-
-  @ManyToMany(() => PromoCampaignsEntity)
-  @JoinTable()
-  promoCampaignList: PromoCampaignsEntity[];
-
-  @Column({ nullable: true })
-  promoDiscount: number; // discount from promo code
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;

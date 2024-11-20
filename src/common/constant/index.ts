@@ -38,3 +38,11 @@ export enum PROMO_TYPE {
   WHOLE_RECEIPT,
   BONUS,
 }
+
+export enum PROMO_CODE_STATUS {
+  NOT_STARTED,
+  OCCUPIED,
+  PAUSED,
+  ENDED,
+  OUT_OF_STOCK,
+}

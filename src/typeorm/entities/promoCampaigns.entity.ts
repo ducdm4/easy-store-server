@@ -7,10 +7,12 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 import { PromoCampaignBonusEntity } from './promoCampaignBonus.entity';
 import { PromoCampaignConditionsEntity } from './promoCampaignConditions.entity';
+import { PhotoEntity } from './photo.entity';
 
 @Entity({ name: 'promo-campaigns' })
 export class PromoCampaignsEntity {
@@ -29,6 +31,9 @@ export class PromoCampaignsEntity {
 
   @Column({ nullable: true, type: 'datetime', default: null })
   timeEnd: Date;
+
+  @OneToOne(() => PhotoEntity)
+  image: PhotoEntity;
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;

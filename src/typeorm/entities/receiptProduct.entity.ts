@@ -48,18 +48,11 @@ export class ReceiptProductEntity {
   @Column({ default: 1, type: 'decimal', precision: 5, scale: 1 })
   quantity: number;
 
-  @Column({ nullable: false })
-  price: number;
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  price: number; // price in product table, originalPrice if price is empty
 
-  @Column({ nullable: false })
-  priceDiscount: number;
-
-  @Column({ nullable: true })
-  promoDiscount: number; // % discount from promo code
-
-  @ManyToMany(() => PromoCodeEntity)
-  @JoinTable()
-  promoCodes: PromoCodeEntity[];
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  priceDiscounted: number; // price after discount
 
   @CreateDateColumn()
   createdAt: Date;

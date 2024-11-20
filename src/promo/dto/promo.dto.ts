@@ -12,6 +12,7 @@ export class CreatePromoCodeDto {
   discountType: number;
 
   discountAmount: number;
+  itemQuantity: number;
 
   timeStart: Date;
   timeEnd: Date;
@@ -22,19 +23,23 @@ export class CreatePromoCodeDto {
   @IsBoolean()
   isPaused: boolean;
 
-  products: Array<{
+  product: {
     id: number;
-  }>;
+  };
 
-  combos: Array<{
+  combo: {
     id: number;
-  }>;
+  };
 
-  packages: Array<{
+  package: {
     id: number;
-  }>;
+  };
 
   store: {
     id: number;
   };
+}
+
+export class UpdatePromoCodeDto extends CreatePromoCodeDto {
+  id: number;
 }

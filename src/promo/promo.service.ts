@@ -1,11 +1,22 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { In, Like, Not, Repository } from 'typeorm';
-import { CreatePromoCodeDto } from './dto/promo.dto';
-import { KeyValue, PROMO_TYPE } from 'src/common/constant';
+import { CreatePromoCodeDto, UpdatePromoCodeDto } from './dto/promo.dto';
+import { KeyValue, PROMO_CODE_STATUS, PROMO_TYPE } from 'src/common/constant';
 import { PromoCodeEntity } from '../typeorm/entities/promoCode.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
+import moment from 'moment';
+import { ProductEntity } from 'src/typeorm/entities/product.entity';
+import { ComboEntity } from 'src/typeorm/entities/combo.entity';
+import { PackagesEntity } from 'src/typeorm/entities/package.entity';
+import { isArray } from 'class-validator';
 
 @Injectable()
 export class PromoService {
@@ -24,309 +35,253 @@ export class PromoService {
       promoData.store.id.toString(),
     );
     if (storeCheck) {
+      const promoCheck = await this.promoCodeRepository.findOne({
+        where: {
+          code: promoData.code,
+        },
+      });
+      if (promoCheck) {
+        throw new HttpException(
+          'Promo code already exist',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       const promo = this.promoCodeRepository.create({
         ...promoData,
       });
+      if (promo.quantity === 0) {
+        promo.quantity = null;
+      }
+      promo.numbersUsed = 0;
       await this.promoCodeRepository.save(promo);
       return promo;
     }
   }
 
-  // async listAllSpaceGroup(
-  //   user: { storeList: Array<{ id: string }> },
-  //   storeId: string,
-  // ) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     storeId,
-  //   );
-  //   if (storeCheck) {
-  //     const list = await this.spaceRepository.find({
-  //       select: {
-  //         id: true,
-  //         name: true,
-  //       },
-  //       where: {
-  //         store: {
-  //           id: parseInt(storeId),
-  //         },
-  //       },
-  //     });
+  async getListPromoCode(
+    storeId: string,
+    storeList: Array<{ id: string }>,
+    findOptions: SearchInterface,
+  ) {
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      storeId,
+    );
+    if (storeCheck) {
+      const query = dataSource
+        .createQueryBuilder()
+        .select([
+          'promoCode.id',
+          'promoCode.code',
+          'promoCode.quantity',
+          'promoCode.numbersUsed',
+          'promoCode.discountType',
+          'promoCode.discountAmount',
+          'promoCode.timeStart',
+          'promoCode.timeEnd',
+          'promoCode.isPaused',
+        ])
+        .leftJoinAndMapOne(
+          'promoCode.product',
+          ProductEntity,
+          'product',
+          'product.id = promoCode.productId',
+        )
+        .leftJoinAndMapOne(
+          'promoCode.combo',
+          ComboEntity,
+          'combo',
+          'combo.id = promoCode.comboId',
+        )
+        .leftJoinAndMapOne(
+          'promoCode.package',
+          PackagesEntity,
+          'package',
+          'package.id = promoCode.packageId',
+        )
+        .from(PromoCodeEntity, 'promoCode')
+        .where('promoCode.storeId = :storeId', { storeId });
 
-  //     return list;
-  //   }
-  //   return [];
-  // }
+      if (findOptions.paging.page) {
+        query.skip((findOptions.paging.page - 1) * findOptions.paging.size);
+      }
+      if (findOptions.paging.size) {
+        query.take(findOptions.paging.size);
+      }
+      query.orderBy('promoCode.timeStart', 'ASC');
+      if (findOptions.keyword) {
+        query.andWhere(
+          `(promoCode.code LIKE :keyword OR product.name LIKE :keyword OR combo.name LIKE :keyword OR package.name LIKE :keyword)`,
+          {
+            keyword: '%' + findOptions.keyword + '%',
+          },
+        );
+      }
 
-  // async getSpaceListFilter(
-  //   storeId: string,
-  //   storeList: Array<{ id: string }>,
-  //   findOptions: SearchInterface,
-  // ) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     storeList,
-  //     storeId,
-  //   );
-  //   if (storeCheck) {
-  //     const spacesGroup = await dataSource
-  //       .createQueryBuilder()
-  //       .select([
-  //         'spaces.id',
-  //         'spaces.name',
-  //         'spaces.description',
-  //         'spaces.active',
-  //       ])
-  //       .from(SpaceEntity, 'spaces')
-  //       .where('spaces.storeId = :storeId', { storeId })
-  //       .skip((findOptions.paging.page - 1) * findOptions.paging.size)
-  //       .take(findOptions.paging.size);
+      let isHasFilterStatus = false;
+      const date = new Date();
+      const isInEffectQuery =
+        '(promoCode.timeStart <= :date AND promoCode.timeEnd >= :date AND (promoCode.quantity IS NULL OR promoCode.numbersUsed < promoCode.quantity))';
+      if (findOptions.filter.length) {
+        findOptions.filter.forEach(async (fil) => {
+          if (fil.key === 'status') {
+            isHasFilterStatus = true;
+            if (isArray(fil.value)) {
+              const addedQuery = [];
+              fil.value.forEach((val) => {
+                if (parseInt(val) === PROMO_CODE_STATUS.NOT_STARTED) {
+                  addedQuery.push('(promoCode.timeStart > :date)');
+                }
+                if (parseInt(val) === PROMO_CODE_STATUS.OCCUPIED) {
+                  let string = isInEffectQuery;
+                  string += ` AND promoCode.isPaused = false`;
+                  addedQuery.push(`(${string})`);
+                }
+                if (parseInt(val) === PROMO_CODE_STATUS.PAUSED) {
+                  let string = isInEffectQuery;
+                  string += ` AND promoCode.isPaused = true`;
+                  addedQuery.push(`(${string})`);
+                }
+                if (parseInt(val) === PROMO_CODE_STATUS.ENDED) {
+                  addedQuery.push(`promoCode.timeEnd < :date`);
+                }
+                if (parseInt(val) === PROMO_CODE_STATUS.OUT_OF_STOCK) {
+                  let string =
+                    'promoCode.timeStart <= :date AND promoCode.timeEnd >= :date';
+                  string +=
+                    ' AND promoCode.isPaused = false AND promoCode.quantity IS NOT NULL AND promoCode.numbersUsed = promoCode.quantity';
+                  addedQuery.push(`(${string})`);
+                }
+              });
 
-  //     if (findOptions.sort.length) {
-  //       findOptions.sort.forEach((sort) => {
-  //         spacesGroup.orderBy(sort.key, sort.value);
-  //       });
-  //     }
-  //     if (findOptions.keyword) {
-  //       spacesGroup.andWhere(
-  //         '(spaces.name LIKE :keyword OR spaces.description LIKE :keyword)',
-  //         {
-  //           keyword: '%' + findOptions.keyword + '%',
-  //         },
-  //       );
-  //     }
-  //     if (findOptions.filter.length) {
-  //       findOptions.filter.forEach((fil) => {
-  //         if (fil.key === 'active') {
-  //           spacesGroup.andWhere('spaces.active IN (:...actives)', {
-  //             actives: fil.value,
-  //           });
-  //         }
-  //       });
-  //     }
+              query.andWhere(`${addedQuery.join(' OR ')}`, {
+                date,
+              });
+            }
+          }
+        });
+      }
+      if (!isHasFilterStatus) {
+        query.andWhere(`${isInEffectQuery} AND promoCode.isPaused = false`, {
+          date,
+        });
+      }
+      const data = await query.getManyAndCount();
+      return {
+        list: data[0],
+        total: data[1],
+        page: findOptions.paging.page,
+      };
+    }
+  }
 
-  //     const data = await spacesGroup.getManyAndCount();
-  //     return {
-  //       list: data[0],
-  //       total: data[1],
-  //       page: findOptions.paging.page,
-  //     };
-  //   }
-  // }
+  async getDetailPromoCode(code: string, storeList: Array<{ id: string }>) {
+    const selectItem = {
+      id: true,
+      name: true,
+      price: true,
+      originalPrice: true,
+      image: {
+        id: true,
+      },
+    };
+    const promoCode = await this.promoCodeRepository.findOne({
+      select: {
+        id: true,
+        code: true,
+        quantity: true,
+        description: true,
+        itemQuantity: true,
+        numbersUsed: true,
+        discountType: true,
+        discountAmount: true,
+        canUseWithOther: true,
+        timeStart: true,
+        timeEnd: true,
+        isPaused: true,
+        product: {
+          ...selectItem,
+          unit: true,
+        },
+        combo: selectItem,
+        package: selectItem,
+      },
+      where: {
+        code,
+      },
+      relations: {
+        product: {
+          image: true,
+        },
+        combo: {
+          image: true,
+        },
+        package: {
+          image: true,
+        },
+        store: true,
+      },
+    });
+    if (!promoCode) {
+      throw new NotFoundException('Promo code not found');
+    }
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      promoCode.store.id.toString(),
+    );
+    if (storeCheck) {
+      return promoCode;
+    }
+    return null;
+  }
 
-  // async getSpaceUnitListFilter(
-  //   storeId: string,
-  //   storeList: Array<{ id: string }>,
-  //   findOptions: SearchInterface,
-  // ) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     storeList,
-  //     storeId,
-  //   );
-  //   if (storeCheck) {
-  //     const spacesUnit = await dataSource
-  //       .createQueryBuilder()
-  //       .select([
-  //         'spaceUnit.id',
-  //         'spaceUnit.name',
-  //         'spaceUnit.description',
-  //         'spaceUnit.status',
-  //         'spaces.id',
-  //         'spaces.name',
-  //       ])
-  //       .from(SpaceUnitEntity, 'spaceUnit')
-  //       .innerJoin('spaceUnit.space', 'spaces')
-  //       .where('spaces.storeId = :storeId', { storeId })
-  //       .skip((findOptions.paging.page - 1) * findOptions.paging.size)
-  //       .take(findOptions.paging.size);
-
-  //     if (findOptions.sort.length) {
-  //       findOptions.sort.forEach((sort) => {
-  //         spacesUnit.orderBy(sort.key, sort.value);
-  //       });
-  //     }
-  //     if (findOptions.keyword) {
-  //       spacesUnit.andWhere(
-  //         '(spaces.name LIKE :keyword OR spaces.description LIKE :keyword)',
-  //         {
-  //           keyword: '%' + findOptions.keyword + '%',
-  //         },
-  //       );
-  //     }
-  //     if (findOptions.filter.length) {
-  //       findOptions.filter.forEach((fil) => {
-  //         if (fil.key === 'space') {
-  //           spacesUnit.andWhere('spaces.id IN (:...spaces)', {
-  //             spaces: fil.value,
-  //           });
-  //         }
-  //         if (fil.key === 'status') {
-  //           spacesUnit.andWhere('spaceUnit.status IN (:...statuses)', {
-  //             statuses: fil.value,
-  //           });
-  //         }
-  //       });
-  //     }
-
-  //     const data = await spacesUnit.getManyAndCount();
-  //     return {
-  //       list: data[0],
-  //       total: data[1],
-  //       page: findOptions.paging.page,
-  //     };
-  //   }
-  // }
-
-  // async changeSpaceGroupStatus(
-  //   params: KeyValue,
-  //   user: { storeList: Array<{ id: string }> },
-  // ) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     params.storeId,
-  //   );
-  //   if (storeCheck) {
-  //     const space = await this.spaceRepository.findOne({
-  //       where: { id: params.id },
-  //     });
-  //     if (space) {
-  //       space.active = !space.active;
-  //       await this.spaceRepository.save(space);
-  //       return space;
-  //     }
-  //   }
-  // }
-
-  // async editSpaceGroup(
-  //   params: KeyValue,
-  //   user: { storeList: Array<{ id: string }> },
-  //   editSpaceGroup: UpdateSpaceDto,
-  // ) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     params.storeId,
-  //   );
-  //   if (storeCheck) {
-  //     const space = await this.spaceRepository.findOne({
-  //       where: { id: params.id },
-  //     });
-  //     if (space) {
-  //       space.active = editSpaceGroup.active;
-  //       space.name = editSpaceGroup.name;
-  //       space.description = editSpaceGroup.description;
-  //       await this.spaceRepository.save(space);
-  //       return space;
-  //     }
-  //   }
-  // }
-
-  // async editSpaceUnit(
-  //   params: KeyValue,
-  //   user: { storeList: Array<{ id: string }> },
-  //   editSpaceUnitData: UpdateSpaceUnitDto,
-  // ) {
-  //   const spaceUnit = await this.spaceUnitRepository.findOne({
-  //     relations: {
-  //       space: {
-  //         store: true,
-  //       },
-  //     },
-  //     where: { id: params.id },
-  //   });
-  //   if (!spaceUnit) {
-  //     throw new HttpException('Space Unit not found', HttpStatus.NOT_FOUND);
-  //   }
-  //   if (spaceUnit.space.id !== editSpaceUnitData.space.id) {
-  //     throw new HttpException('Space Group not match', HttpStatus.BAD_REQUEST);
-  //   }
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     spaceUnit.space.store.id.toString(),
-  //   );
-  //   if (storeCheck) {
-  //     spaceUnit.name = editSpaceUnitData.name;
-  //     spaceUnit.description = editSpaceUnitData.description;
-  //     spaceUnit.status = editSpaceUnitData.status;
-  //     spaceUnit.space.id = editSpaceUnitData.space.id;
-
-  //     await this.spaceUnitRepository.save(spaceUnit);
-  //     return spaceUnit;
-  //   }
-  // }
-
-  // async deleteSpaceGroup(
-  //   params: KeyValue,
-  //   user: { storeList: Array<{ id: string }> },
-  // ) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     params.storeId,
-  //   );
-  //   if (storeCheck) {
-  //     const space = await this.spaceRepository.findOne({
-  //       where: { id: params.id },
-  //     });
-  //     if (space) {
-  //       const res = await this.spaceRepository.softDelete(space);
-  //       return res;
-  //     }
-  //   }
-  // }
-
-  // async deleteSpaceUnit(
-  //   params: KeyValue,
-  //   user: { storeList: Array<{ id: string }> },
-  // ) {
-  //   const spaceUnit = await this.spaceUnitRepository.findOne({
-  //     relations: {
-  //       space: {
-  //         store: true,
-  //       },
-  //     },
-  //     where: { id: params.id },
-  //   });
-  //   if (!spaceUnit) {
-  //     throw new HttpException('Space Unit not found', HttpStatus.NOT_FOUND);
-  //   }
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     spaceUnit.space.store.id.toString(),
-  //   );
-  //   if (storeCheck) {
-  //     const res = await this.spaceUnitRepository.softDelete(spaceUnit);
-  //     return res;
-  //   }
-  // }
-
-  // async addNewSpaceUnit(
-  //   spaceUnitData: CreateSpaceUnitDto,
-  //   user: { id: number; storeList: Array<{ id: string }> },
-  // ) {
-  //   const space = await this.spaceRepository.findOne({
-  //     select: {
-  //       id: true,
-  //       store: {
-  //         id: true,
-  //       },
-  //     },
-  //     relations: {
-  //       store: true,
-  //     },
-  //     where: { id: spaceUnitData.space.id },
-  //   });
-  //   if (!space) {
-  //     throw new HttpException('Space not found', HttpStatus.NOT_FOUND);
-  //   }
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     user.storeList,
-  //     space.store.id.toString(),
-  //   );
-  //   if (storeCheck) {
-  //     const spaceUnit = this.spaceUnitRepository.create({
-  //       ...spaceUnitData,
-  //     });
-  //     await this.spaceUnitRepository.save(spaceUnit);
-  //     return spaceUnit;
-  //   }
-  //   return null;
-  // }
+  async updatePromoCode(
+    code: string,
+    promoData: UpdatePromoCodeDto,
+    storeList: Array<{ id: string }>,
+  ) {
+    const promoInfo = await this.promoCodeRepository.findOne({
+      relations: {
+        store: true,
+      },
+      where: {
+        code,
+      },
+    });
+    if (!promoInfo) {
+      throw new NotFoundException('Promo code not found');
+    }
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      promoInfo.store.id.toString(),
+    );
+    if (storeCheck) {
+      if (
+        !isNaN(parseInt(`${promoData.quantity}`)) &&
+        promoData.quantity < promoInfo.numbersUsed
+      ) {
+        throw new HttpException(
+          'Number of times can use must be greater than or equal to numbers used',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const newData = {
+        ...promoInfo,
+        quantity: promoData.quantity === 0 ? null : promoData.quantity,
+        description: promoData.description,
+        discountAmount: promoData.discountAmount,
+        discountType: promoData.discountType,
+        timeStart: promoData.timeStart,
+        timeEnd: promoData.timeEnd,
+        canUseWithOther: promoData.canUseWithOther,
+        itemQuantity: promoData.itemQuantity,
+        isPaused: promoData.isPaused,
+        product: promoData.product ? promoData.product : null,
+        combo: promoData.combo ? promoData.combo : null,
+        package: promoData.package ? promoData.package : null,
+      };
+      await this.promoCodeRepository.save(newData);
+      return true;
+    }
+  }
 }
