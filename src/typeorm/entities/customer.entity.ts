@@ -31,6 +31,7 @@ export class CustomerEntity {
 
   @Column({ type: 'integer', default: 0 })
   point: number; //TODO: need config in store to define how many revenue to get 1 point
+  //TODO: handle exchange point to cash, manage turn on/off in store setting and define exchange rate
 
   @ManyToOne(() => StoreEntity)
   store: StoreEntity;

@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { ProductEntity } from './product.entity';
 import { ComboEntity } from './combo.entity';
@@ -17,7 +18,11 @@ export class PromoCampaignBonusEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => PromoCampaignsEntity)
+  @ManyToOne(
+    () => PromoCampaignsEntity,
+    (promoCampaigns) => promoCampaigns.promoCampaignConditions,
+  )
+  @JoinColumn({ name: 'promoCampaignsId' })
   promoCampaigns: PromoCampaignsEntity;
 
   @ManyToOne(() => ProductEntity)
@@ -34,16 +39,23 @@ export class PromoCampaignBonusEntity {
   // 0: discount percent on next n product, 1: discount money on next n product
   // if prod and combo and package all null then will be applied for whole receipt
 
-  @Column({ default: 0, type: 'decimal', precision: 5, scale: 2 })
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   discountAmount: number;
   // number of percent or money to be discount.
 
-  @Column({ default: 0, type: 'integer' })
+  @Column({
+    nullable: true,
+    default: null,
+    type: 'decimal',
+    precision: 11,
+    scale: 2,
+  })
+  maximumAmount: number;
+  // if discount type is percent then this is the maximum cash can be discount, 0 if unlimited.
+
+  @Column({ nullable: true, default: null, type: 'integer' })
   quantity: number;
   // how many next product or receipt can be applied
-
-  @Column({ default: 0 })
-  expiryDate: number; // number of date to expire, 0 if forever
 
   @CreateDateColumn()
   createdAt: Date;

@@ -40,7 +40,7 @@ export class PhotosService {
   async deletePhoto(id) {
     const checkCity = await this.getPhotoById(id);
     if (checkCity) {
-      const result = await this.photoRepository.softDelete(id);
+      const result = await this.photoRepository.softRemove(id);
       return result;
     }
   }

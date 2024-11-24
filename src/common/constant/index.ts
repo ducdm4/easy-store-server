@@ -46,3 +46,10 @@ export enum PROMO_CODE_STATUS {
   ENDED,
   OUT_OF_STOCK,
 }
+
+export enum PROMO_CAMPAIGN_STATUS {
+  NOT_STARTED,
+  OCCUPIED,
+  PAUSED,
+  ENDED,
+}

@@ -281,7 +281,7 @@ export class PackagesService {
         packageInfo.store.id.toString(),
       );
       if (storeCheck) {
-        await this.packagesRepository.softDelete(packageInfo);
+        await this.packagesRepository.softRemove(packageInfo);
         return true;
       }
     }

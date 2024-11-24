@@ -8,6 +8,7 @@ import {
   ManyToOne,
   OneToMany,
   OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 import { PromoCampaignBonusEntity } from './promoCampaignBonus.entity';
@@ -32,7 +33,10 @@ export class PromoCampaignsEntity {
   @Column({ nullable: true, type: 'datetime', default: null })
   timeEnd: Date;
 
-  @OneToOne(() => PhotoEntity)
+  @OneToOne(() => PhotoEntity, {
+    cascade: true,
+  })
+  @JoinColumn({ name: 'imageId', referencedColumnName: 'id' })
   image: PhotoEntity;
 
   @ManyToOne(() => StoreEntity)
@@ -61,6 +65,18 @@ export class PromoCampaignsEntity {
 
   @Column({ default: false })
   isPaused: boolean; // in case needed to pause the promo code
+
+  @Column({ default: 0 })
+  timesUsed: number;
+
+  @Column({ default: false })
+  isCumulative: boolean; // able to apply bonus multiple time when condition reach multiple time
+
+  @Column({ default: 0 })
+  expiryDate: number;
+  // -1 mean this promotion must use in this receipt and can not use for next receipt
+  // 0 is mean this promotion can be use for next receipt and never expire
+  // >0 is mean this promotion can be use for next receipt and expire after n days
 
   @CreateDateColumn()
   createdAt: Date;
