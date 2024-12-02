@@ -54,6 +54,9 @@ export class ReceiptProductEntity {
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   priceDiscounted: number; // price after discount
 
+  @Column({ nullable: true, default: null, type: 'text' })
+  note: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

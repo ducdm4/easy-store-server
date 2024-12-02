@@ -49,6 +49,9 @@ export class ReceiptEntity {
   @ManyToOne(() => CustomerEntity)
   customer: CustomerEntity;
 
+  @Column({ nullable: true, default: null, type: 'text' })
+  note: string;
+
   @OneToOne(() => SpaceUnitEntity)
   @JoinColumn()
   spaceUnit: SpaceUnitEntity; // space unit that customer use

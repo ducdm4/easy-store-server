@@ -70,6 +70,9 @@ export class ProductEntity {
   @Column({ default: true })
   isSaleable: boolean;
 
+  @Column({ nullable: true, default: null, type: 'text' })
+  toppingCategory: string;
+
   @OneToMany(
     () => ProductInStockDailyEntity,
     (productInStock) => productInStock.product,
