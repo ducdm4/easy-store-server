@@ -1,5 +1,7 @@
 import { encode } from 'html-entities';
 import { SearchInterface } from '../interface/search.interface';
+import { UserLoggedInDto } from 'src/user/dto/user.dto';
+import { ROLE_LIST } from '../constant';
 
 export const getFilterObject = (req) => {
   const filterObject: SearchInterface = {
@@ -26,7 +28,7 @@ export const getFilterObject = (req) => {
     for (const [key, value] of Object.entries(req.query['filter'])) {
       filterObject.filter.push({
         key,
-        value: (value as string).split(','),
+        value: (value as string).split('||'),
       });
     }
   }
@@ -38,4 +40,14 @@ export const getFilterObject = (req) => {
   }
 
   return filterObject;
+};
+
+export const getStoreListForCheck = (user: UserLoggedInDto) => {
+  return user.role === ROLE_LIST.STORE_OWNER
+    ? user.storeList
+    : [
+        {
+          id: user.store.toString(),
+        },
+      ];
 };

@@ -8,6 +8,7 @@ import { StoresService } from '../store/stores.service';
 import { ProductInStockDailyService } from './productInStockDaily.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
 import { ConfigsService } from 'src/config/configs.service';
+import { ProductInStockDailyEntity } from 'src/typeorm/entities/productInStockDaily.entity';
 
 @Injectable()
 export class ProductService {
@@ -34,6 +35,9 @@ export class ProductService {
       if (!data.image?.id) delete data.image;
       const dataToSave = {
         ...data,
+        toppingCategory: data.toppingCategory
+          ? JSON.stringify(data.toppingCategory)
+          : null,
         price: data.price ? parseFloat(data.price) : 0,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
         commissionRate: data.commissionRate
@@ -56,7 +60,7 @@ export class ProductService {
 
     let newList = [];
     if (current) {
-      newList = current.value.split('|');
+      newList = current.value.split('||');
       if (!newList.includes(data[key])) {
         newList.push(data[key]);
       }
@@ -66,7 +70,7 @@ export class ProductService {
 
     await this.configService.updateValueByKey(
       key,
-      newList.join('|'),
+      newList.join('||'),
       data.store.id,
     );
   }
@@ -108,6 +112,7 @@ export class ProductService {
           'product.id',
           'product.name',
           'product.price',
+          'product.originalPrice',
           'product.type',
           'product.unit',
           'product.category',
@@ -128,6 +133,8 @@ export class ProductService {
         findOptions.sort.forEach((sort) => {
           if (sort.key === 'price') {
             productQuery.orderBy('product.price * 1', sort.value);
+          } else if (sort.key === 'category') {
+            productQuery.orderBy('product.category', sort.value);
           } else {
             productQuery.orderBy(sort.key, sort.value);
           }
@@ -158,11 +165,38 @@ export class ProductService {
               type: fil.value,
             });
           }
+          if (fil.key === 'isSaleable') {
+            productQuery.andWhere('product.isSaleable = :isSaleable', {
+              isSaleable: fil.value,
+            });
+          }
+          if (fil.key === 'isActive') {
+            productQuery.andWhere('product.isActive = :isActive', {
+              isActive: fil.value,
+            });
+          }
         });
       }
       const data = await productQuery.getManyAndCount();
+      const result = [];
+      for (let i = 0; i < data[0].length; i++) {
+        const newData = {
+          ...data[0][i],
+          inStock: 0,
+        };
+        if (data[0][i].isStorable) {
+          const inStock =
+            await this.productInStockDailyService.getInStockForProduct(
+              data[0][i].id,
+            );
+          newData.inStock = inStock
+            ? parseFloat(inStock.quantity.toString())
+            : 0;
+        }
+        result.push(newData);
+      }
       return {
-        list: data[0],
+        list: result,
         total: data[1],
         page: findOptions.paging.page,
       };
@@ -271,6 +305,9 @@ export class ProductService {
       if (!data.image?.id) delete data.image;
       const dataToSave = {
         ...data,
+        toppingCategory: data.toppingCategory
+          ? JSON.stringify(data.toppingCategory)
+          : null,
         price: data.price ? parseFloat(data.price) : 0,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
         commissionRate: data.commissionRate

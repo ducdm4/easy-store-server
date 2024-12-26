@@ -39,6 +39,7 @@ export class PackagesService {
         commissionRate: data.commissionRate
           ? parseFloat(data.commissionRate)
           : null,
+        commissionType: data.commissionType,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
       });
       await this.packagesRepository.save(newPackage);
@@ -63,6 +64,7 @@ export class PackagesService {
           'packages.name',
           'packages.isActive',
           'packages.price',
+          'packages.originalPrice',
           'packages.timesCanUse',
         ])
         .from(PackagesEntity, 'packages')
@@ -84,9 +86,14 @@ export class PackagesService {
           'comboInPackage',
           'packageProductQuantity.comboId = comboInPackage.id',
         )
-        .where('packages.storeId = :storeId', { storeId })
-        .skip((findOptions.paging.page - 1) * findOptions.paging.size)
-        .take(findOptions.paging.size);
+        .leftJoinAndSelect('packages.image', 'photo')
+        .where('packages.storeId = :storeId', { storeId });
+      if (findOptions.paging.page !== 0) {
+        packageQuery.skip(
+          (findOptions.paging.page - 1) * findOptions.paging.size,
+        );
+        packageQuery.take(findOptions.paging.size);
+      }
       if (findOptions.sort.length) {
         findOptions.sort.forEach((sort) => {
           if (sort.key === 'name') {

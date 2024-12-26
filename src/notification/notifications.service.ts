@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import * as firebaseAdmin from 'firebase-admin';
 
 firebaseAdmin.initializeApp({
-  credential: firebaseAdmin.credential.cert('./firebase.json'),
+  // credential: firebaseAdmin.credential.cert('./firebase.json'),
 });
 
 @Injectable()

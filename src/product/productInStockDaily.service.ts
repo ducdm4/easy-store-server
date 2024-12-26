@@ -29,7 +29,7 @@ export class ProductInStockDailyService {
         date: LessThanOrEqual(new Date(data.date)),
       },
       order: {
-        id: 'DESC',
+        date: 'DESC',
       },
     });
     const baseData = {

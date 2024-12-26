@@ -8,6 +8,8 @@ export class CreateProductDto {
   @IsString()
   description: string;
 
+  toppingCategory: Array<any>;
+
   type: number;
   image: {
     id: number;

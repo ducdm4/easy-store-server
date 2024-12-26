@@ -21,7 +21,7 @@ export class MoneyBalanceDailyService {
         date: LessThanOrEqual(new Date(data.date)),
       },
       order: {
-        id: 'DESC',
+        date: 'DESC',
       },
     });
     const baseData = {

@@ -7,6 +7,7 @@ import { StoresService } from '../store/stores.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
 import { ComboQuantityEntity } from 'src/typeorm/entities/comboQuantity.entity';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
+import { PhotoEntity } from 'src/typeorm/entities/photo.entity';
 
 @Injectable()
 export class ComboService {
@@ -51,9 +52,15 @@ export class ComboService {
       storeId,
     );
     if (storeCheck) {
-      const comboQuery = await dataSource
+      const comboQuery = dataSource
         .createQueryBuilder()
-        .select(['combo.id', 'combo.name', 'combo.isActive', 'combo.price'])
+        .select([
+          'combo.id',
+          'combo.name',
+          'combo.isActive',
+          'combo.price',
+          'combo.originalPrice',
+        ])
         .from(ComboEntity, 'combo')
         .innerJoinAndMapMany(
           'combo.comboQuantity',
@@ -67,9 +74,14 @@ export class ComboService {
           'productCombo',
           'comboQuantity.productUsedId = productCombo.id',
         )
-        .where('combo.storeId = :storeId', { storeId })
-        .skip((findOptions.paging.page - 1) * findOptions.paging.size)
-        .take(findOptions.paging.size);
+        .leftJoinAndSelect('combo.image', 'photo')
+        .where('combo.storeId = :storeId', { storeId });
+      if (findOptions.paging.page !== 0) {
+        comboQuery.skip(
+          (findOptions.paging.page - 1) * findOptions.paging.size,
+        );
+        comboQuery.take(findOptions.paging.size);
+      }
       if (findOptions.sort.length) {
         findOptions.sort.forEach((sort) => {
           if (sort.key === 'name') {
@@ -80,8 +92,25 @@ export class ComboService {
         });
       }
       if (findOptions.keyword) {
-        comboQuery.andWhere(`(combo.name LIKE :keyword)`, {
-          keyword: '%' + findOptions.keyword + '%',
+        comboQuery.andWhere((qb) => {
+          const subKeyword1 = qb
+            .subQuery()
+            .select('combo3.id')
+            .from(ComboEntity, 'combo3')
+            .where('combo3.name LIKE :keyword', {
+              keyword: '%' + findOptions.keyword + '%',
+            })
+            .getQuery();
+          const subKeyword2 = qb
+            .subQuery()
+            .select('product.id')
+            .from(ProductEntity, 'product')
+            .where('product.name LIKE :keyword2', {
+              keyword2: '%' + findOptions.keyword + '%',
+            })
+            .getQuery();
+          const result = `combo.id IN ${subKeyword1} OR comboQuantity.productUsedId IN ${subKeyword2}`;
+          return result;
         });
       }
       if (findOptions.filter.length) {
@@ -113,7 +142,6 @@ export class ComboService {
         });
       }
       const data = await comboQuery.getManyAndCount();
-
       return {
         list: data[0],
         total: data[1],

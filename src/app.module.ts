@@ -9,6 +9,7 @@ import { StoresController } from './store/stores.controller';
 import { PhotosController } from './photo/photos.controller';
 import { ConfigsController } from './config/configs.controller';
 import { SpacesController } from './space/spaces.controller';
+import { CategoryController } from './category/category.controller';
 import { EmployeeController } from './employee/employee.controller';
 import { PersonalInfoController } from './personalInfo/personalInfo.controller';
 import { ProductController } from './product/product.controller';
@@ -25,6 +26,7 @@ import { EventsModule } from './events/events.module';
 import { StoresModule } from './store/stores.module';
 import { TasksModule } from './scheduleTask/scheduleTasks.module';
 import { SpacesModule } from './space/spaces.module';
+import { CategoryModule } from './category/category.module';
 import { EmployeeModule } from './employee/employee.module';
 import { PersonalInfoModule } from './personalInfo/personalInfo.module';
 import { ProductModule } from './product/product.module';
@@ -59,6 +61,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ProductTransactionsModule,
     MoneyTransactionsModule,
     PromoModule,
+    CategoryModule,
   ],
   providers: [],
 })
@@ -80,6 +83,7 @@ export class AppModule implements NestModule {
         ProductTransactionsController,
         MoneyTransactionsController,
         PromoController,
+        CategoryController,
       );
   }
 }

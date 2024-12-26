@@ -17,12 +17,13 @@ import { ROLE_LIST } from 'src/common/constant';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 import { RolesGuard } from 'src/common/guard/roles.guard';
+import { getStoreListForCheck } from 'src/common/function';
 
 @Controller('configs')
 export class ConfigsController {
   constructor(private readonly configService: ConfigsService) {}
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
   @Get('/')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -33,11 +34,12 @@ export class ConfigsController {
   ) {
     try {
       const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
       const config = await this.configService.getValueByKey(
         data.key,
         true,
         data.storeId,
-        user.storeList,
+        storeList,
       );
 
       res.status(HttpStatus.OK).json({ data: config });

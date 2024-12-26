@@ -20,11 +20,16 @@ export class MoneyTransactionsService {
   async createNewTransaction(
     data: CreateTransactionsDto,
     storeList: Array<{ id: string }>,
+    needCheckStore = true,
   ) {
-    const storeCheck = await this.storeService.checkStoreOwner(
-      storeList,
-      data.store.id.toString(),
-    );
+    let storeCheck = true;
+    if (needCheckStore) {
+      storeCheck = await this.storeService.checkStoreOwner(
+        storeList,
+        data.store.id.toString(),
+      );
+    }
+
     if (storeCheck) {
       const dataToSave = this.moneyTransactionsRepository.create({
         ...data,
@@ -180,7 +185,7 @@ export class MoneyTransactionsService {
         storeId,
         moment(new Date()).format('YYYY-MM-DD'),
       );
-      return balance.balance || 0;
+      return balance?.balance || 0;
     }
     return 0;
   }

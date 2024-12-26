@@ -2,6 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { StoresService } from 'src/store/stores.service';
 import { ProductService } from 'src/product/product.service';
 import { ProductInStockDailyService } from 'src/product/productInStockDaily.service';
+import { MoneyTransactionsService } from 'src/moneyTransactions/moneyTransactions.service';
 import { ProductTransactionsEntity } from 'src/typeorm/entities/productTransactions.entity';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateTransactionsDto } from './productTransactions.dto';
@@ -9,6 +10,7 @@ import { SearchInterface } from 'src/common/interface/search.interface';
 import { dataSource } from 'src/database/database.providers';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
 import * as moment from 'moment';
+import { TRANSACTIONS_TYPE } from 'src/common/constant';
 
 @Injectable()
 export class ProductTransactionsService {
@@ -17,6 +19,7 @@ export class ProductTransactionsService {
     private transactionsRepository: Repository<ProductTransactionsEntity>,
     private storeService: StoresService,
     private productService: ProductService,
+    private moneyTransactionService: MoneyTransactionsService,
     private productInStockDailyService: ProductInStockDailyService,
   ) {}
 
@@ -46,6 +49,21 @@ export class ProductTransactionsService {
           type: data.type,
           date: data.date,
         });
+        if (data.spendAmount !== null) {
+          await this.moneyTransactionService.createNewTransaction(
+            {
+              reason: `Spend for import product ${product.name}`,
+              type: TRANSACTIONS_TYPE.EXPORT,
+              amount: data.spendAmount,
+              date: data.date,
+              store: {
+                id: product.store.id,
+              },
+            },
+            [],
+            false,
+          );
+        }
         return dataToSave;
       }
       return '';

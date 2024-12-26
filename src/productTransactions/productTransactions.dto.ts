@@ -20,4 +20,7 @@ export class CreateTransactionsDto {
 
   @IsString()
   date: string;
+
+  @IsString()
+  spendAmount: string;
 }

@@ -22,7 +22,7 @@ import { ComboService } from './combo.service';
 import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ROLE_LIST } from '../common/constant';
-import { getFilterObject } from 'src/common/function';
+import { getFilterObject, getStoreListForCheck } from 'src/common/function';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 import { RolesGuard } from 'src/common/guard/roles.guard';
@@ -53,7 +53,7 @@ export class ComboController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
   @Get('/')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -61,9 +61,10 @@ export class ComboController {
     try {
       const user = req.user as UserLoggedInDto;
       const filterOption = getFilterObject(req);
+      const storeList = getStoreListForCheck(user);
       const comboList = await this.comboService.getListCombo(
         req.query['storeId'].toString(),
-        user.storeList,
+        storeList,
         filterOption,
       );
       res.status(HttpStatus.OK).json({ data: comboList });

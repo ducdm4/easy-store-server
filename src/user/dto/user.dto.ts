@@ -61,4 +61,6 @@ export class ChangePasswordDto {
 export class UserLoggedInDto {
   id: number;
   storeList: Array<{ id: string }>;
+  store?: number;
+  role: number;
 }
