@@ -9,11 +9,14 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { PhotoEntity } from './photo.entity';
 import { StoreEntity } from './store.entity';
 import { ProductInStockDailyEntity } from './productInStockDaily.entity';
 import { ProductTransactionsEntity } from './productTransactions.entity';
+import { CategoryEntity } from './category.entity';
 
 @Entity({ name: 'products' })
 export class ProductEntity {
@@ -52,8 +55,9 @@ export class ProductEntity {
   @Column({ nullable: false })
   unit: string;
 
-  @Column({ nullable: false })
-  category: string;
+  @ManyToOne(() => CategoryEntity)
+  @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
+  category: CategoryEntity;
 
   @Column({ nullable: true })
   duration: number;
@@ -67,11 +71,15 @@ export class ProductEntity {
   @Column({ default: true })
   isStorable: boolean;
 
-  @Column({ default: true })
-  isSaleable: boolean;
+  @Column({ default: 0 })
+  maxSalePerTime: number;
+  // 0 equals no limit
+  // max number of product can be sold in one time
+  // for topping it the max number of topping can be added
 
-  @Column({ nullable: true, default: null, type: 'text' })
-  toppingCategory: string;
+  @ManyToMany(() => CategoryEntity)
+  @JoinTable()
+  toppingCategory: CategoryEntity[];
 
   @OneToMany(
     () => ProductInStockDailyEntity,

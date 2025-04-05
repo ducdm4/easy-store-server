@@ -36,7 +36,7 @@ export class ComboController {
   @Post('/')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
-  async addEmployee(
+  async addCombo(
     @Body() createComboData: CreateComboDto,
     @Req() req: Request,
     @Res() res: Response,

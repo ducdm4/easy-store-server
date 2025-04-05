@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
@@ -15,15 +16,18 @@ export class PersonalInfoEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: false })
+  @Column({ nullable: true, unique: false, default: '' })
   email: string;
 
-  @Column({ nullable: true })
+  @Index()
+  @Column({ nullable: true, default: null })
   firstName: string;
 
-  @Column({ nullable: true })
+  @Index()
+  @Column({ nullable: true, default: null })
   lastName: string;
 
+  @Index()
   @Column({ nullable: true })
   phone: string;
 

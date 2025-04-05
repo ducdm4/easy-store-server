@@ -62,6 +62,7 @@ export class PackagesService {
         .select([
           'packages.id',
           'packages.name',
+          'packages.description',
           'packages.isActive',
           'packages.price',
           'packages.originalPrice',
@@ -87,6 +88,8 @@ export class PackagesService {
           'packageProductQuantity.comboId = comboInPackage.id',
         )
         .leftJoinAndSelect('packages.image', 'photo')
+        .leftJoinAndSelect('productInPackage.image', 'productInPackagePhoto')
+        .leftJoinAndSelect('comboInPackage.image', 'comboInPackagePhoto')
         .where('packages.storeId = :storeId', { storeId });
       if (findOptions.paging.page !== 0) {
         packageQuery.skip(

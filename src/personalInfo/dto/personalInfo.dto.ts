@@ -9,7 +9,6 @@ export class CreatePersonalInfoDto {
   @IsString()
   lastName: string;
 
-  @IsNotEmpty()
   @IsString()
   email: string;
 
@@ -22,8 +21,6 @@ export class CreatePersonalInfoDto {
 
   dob: string;
   gender: boolean;
-
-  description: string;
 }
 
 export class UpdatePersonalInfoDto extends CreatePersonalInfoDto {

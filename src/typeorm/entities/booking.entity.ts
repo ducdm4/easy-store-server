@@ -20,7 +20,7 @@ export class BookingEntity {
   customer: CustomerEntity;
 
   @Column({ nullable: true, type: 'date', default: null })
-  timeArrive: string;
+  timeArrive: Date;
 
   @ManyToOne(() => SpaceUnitEntity)
   spaceUnit: SpaceUnitEntity;

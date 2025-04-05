@@ -27,7 +27,10 @@ export class CategoryService {
         name: data.name,
         store: { id: data.store.id },
         displayed: data.displayed,
+        isTopping: data.isTopping,
+        isToppingRequired: data.isToppingRequired,
         displayOrder: data.displayOrder,
+        max: data.max,
       });
       await this.categoryRepository.save(category);
       return category;
@@ -50,6 +53,9 @@ export class CategoryService {
           'category.id',
           'category.name',
           'category.displayed',
+          'category.isTopping',
+          'category.isToppingRequired',
+          'category.max',
           'category.displayOrder',
         ])
         .from(CategoryEntity, 'category')
@@ -78,6 +84,11 @@ export class CategoryService {
           if (fil.key === 'displayed') {
             query.andWhere(`category.displayed = :displayed`, {
               displayed: fil.value,
+            });
+          }
+          if (fil.key === 'isTopping') {
+            query.andWhere(`category.isTopping = :isTopping`, {
+              isTopping: fil.value,
             });
           }
         });

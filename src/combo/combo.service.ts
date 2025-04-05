@@ -8,6 +8,7 @@ import { SearchInterface } from 'src/common/interface/search.interface';
 import { ComboQuantityEntity } from 'src/typeorm/entities/comboQuantity.entity';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
 import { PhotoEntity } from 'src/typeorm/entities/photo.entity';
+import { ComboProductToppingEntity } from 'src/typeorm/entities/comboProductTopping.entity';
 
 @Injectable()
 export class ComboService {
@@ -35,6 +36,7 @@ export class ComboService {
         commissionRate: data.commissionRate
           ? parseFloat(data.commissionRate)
           : null,
+        commissionType: data.commissionType,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
       });
       await this.comboRepository.save(combo);
@@ -57,6 +59,7 @@ export class ComboService {
         .select([
           'combo.id',
           'combo.name',
+          'combo.description',
           'combo.isActive',
           'combo.price',
           'combo.originalPrice',
@@ -68,13 +71,31 @@ export class ComboService {
           'comboQuantity',
           'combo.id = comboQuantity.comboId',
         )
-        .innerJoinAndMapOne(
+        .leftJoinAndMapOne(
           'comboQuantity.productUsed',
           ProductEntity,
           'productCombo',
           'comboQuantity.productUsedId = productCombo.id',
         )
+        .leftJoinAndMapMany(
+          'comboQuantity.toppingQuantity',
+          ComboProductToppingEntity,
+          'toppingQuantity',
+          'comboQuantity.id = toppingQuantity.comboQuantityId',
+        )
+        .leftJoinAndMapOne(
+          'toppingQuantity.product',
+          ProductEntity,
+          'productToppingUsed',
+          'toppingQuantity.productId = productToppingUsed.id',
+        )
         .leftJoinAndSelect('combo.image', 'photo')
+        .leftJoinAndSelect('productCombo.toppingCategory', 'toppingCategory')
+        .leftJoinAndSelect(
+          'productToppingUsed.image',
+          'productToppingUsedImage',
+        )
+        .leftJoinAndSelect('productCombo.image', 'image')
         .where('combo.storeId = :storeId', { storeId });
       if (findOptions.paging.page !== 0) {
         comboQuery.skip(

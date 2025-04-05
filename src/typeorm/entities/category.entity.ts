@@ -21,6 +21,15 @@ export class CategoryEntity {
   @Column({ default: true })
   displayed: boolean;
 
+  @Column({ default: false })
+  isTopping: boolean;
+
+  @Column({ default: false })
+  isToppingRequired: boolean;
+
+  @Column({ default: null })
+  max: number;
+
   @Column({ default: 0 })
   displayOrder: number;
 

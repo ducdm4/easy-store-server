@@ -6,11 +6,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
 import { ProductEntity } from './product.entity';
-import { PromoCodeEntity } from './promoCode.entity';
 import { ReceiptProductEntity } from './receiptProduct.entity';
 
 @Entity({ name: 'receipt-product-topping' })

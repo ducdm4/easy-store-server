@@ -9,8 +9,18 @@ export class CreateCategoryDto {
   @IsNotEmpty()
   displayed: boolean;
 
+  @IsBoolean()
+  @IsNotEmpty()
+  isTopping: boolean;
+
+  @IsBoolean()
+  @IsNotEmpty()
+  isToppingRequired: boolean;
+
   @IsNumber()
   displayOrder: number;
+
+  max: number;
   store: {
     id: number;
   };

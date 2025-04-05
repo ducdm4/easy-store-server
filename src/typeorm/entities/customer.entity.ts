@@ -23,7 +23,7 @@ export class CustomerEntity {
   personalInfo: PersonalInfoEntity;
 
   @Column({ nullable: true, type: 'date', default: null })
-  joinedDate: string;
+  joinedDate: Date;
 
   @ManyToOne(() => MemberRankEntity)
   @JoinColumn({ name: 'rankId', referencedColumnName: 'id' })

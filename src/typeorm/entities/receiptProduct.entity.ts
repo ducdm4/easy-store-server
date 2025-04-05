@@ -6,14 +6,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
-  ManyToMany,
-  JoinTable,
   OneToMany,
 } from 'typeorm';
-import { StoreEntity } from './store.entity';
 import { ProductEntity } from './product.entity';
 import { ComboEntity } from './combo.entity';
-import { PromoCodeEntity } from './promoCode.entity';
 import { ReceiptEntity } from './receipt.entity';
 import { PackagesEntity } from './package.entity';
 import { ReceiptProductToppingEntity } from './receiptProductTopping.entity';
@@ -27,13 +23,15 @@ export class ReceiptProductEntity {
   receipt: ReceiptEntity;
 
   @ManyToOne(() => ProductEntity)
-  product: ProductEntity;
+  product: ProductEntity; // product in product table
 
   @ManyToOne(() => ComboEntity)
-  combo: ComboEntity;
+  combo: ComboEntity; // will need to save both comboId and productId
 
   @ManyToOne(() => PackagesEntity)
   package: PackagesEntity;
+  // will need to save both packageId and productId or packageId and comboId and productId
+  // in case customer choose package contain both product and combo
 
   @OneToMany(
     () => ReceiptProductToppingEntity,
@@ -52,10 +50,14 @@ export class ReceiptProductEntity {
   price: number; // price in product table, originalPrice if price is empty
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
-  priceDiscounted: number; // price after discount
+  priceDiscounted: number; // price after discount (apply promo code or campaign or customer rank...)
 
   @Column({ nullable: true, default: null, type: 'text' })
   note: string;
+
+  @Column({ default: 0 })
+  groupNumber: number;
+  // group products belongs to same combo, products or combos in the same package
 
   @CreateDateColumn()
   createdAt: Date;

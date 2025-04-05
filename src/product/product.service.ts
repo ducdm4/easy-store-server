@@ -8,7 +8,6 @@ import { StoresService } from '../store/stores.service';
 import { ProductInStockDailyService } from './productInStockDaily.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
 import { ConfigsService } from 'src/config/configs.service';
-import { ProductInStockDailyEntity } from 'src/typeorm/entities/productInStockDaily.entity';
 
 @Injectable()
 export class ProductService {
@@ -35,9 +34,6 @@ export class ProductService {
       if (!data.image?.id) delete data.image;
       const dataToSave = {
         ...data,
-        toppingCategory: data.toppingCategory
-          ? JSON.stringify(data.toppingCategory)
-          : null,
         price: data.price ? parseFloat(data.price) : 0,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
         commissionRate: data.commissionRate
@@ -112,16 +108,28 @@ export class ProductService {
           'product.id',
           'product.name',
           'product.price',
+          'product.description',
+          'product.maxSalePerTime',
           'product.originalPrice',
           'product.type',
           'product.unit',
-          'product.category',
+          'category.name',
+          'category.displayOrder',
+          'category.isToppingRequired',
+          'category.id',
+          'toppingCategory.id',
+          'toppingCategory.name',
+          'toppingCategory.displayOrder',
+          'toppingCategory.isToppingRequired',
+          'toppingCategory.max',
           'product.isActive',
           'product.isStorable',
           'image.id',
         ])
         .from(ProductEntity, 'product')
         .leftJoin('product.image', 'image')
+        .leftJoin('product.category', 'category')
+        .leftJoin('product.toppingCategory', 'toppingCategory')
         .where('product.storeId = :storeId', { storeId });
       if (findOptions.paging.page !== 0) {
         productQuery.skip(
@@ -134,7 +142,7 @@ export class ProductService {
           if (sort.key === 'price') {
             productQuery.orderBy('product.price * 1', sort.value);
           } else if (sort.key === 'category') {
-            productQuery.orderBy('product.category', sort.value);
+            productQuery.orderBy('category.displayOrder', sort.value);
           } else {
             productQuery.orderBy(sort.key, sort.value);
           }
@@ -165,9 +173,9 @@ export class ProductService {
               type: fil.value,
             });
           }
-          if (fil.key === 'isSaleable') {
-            productQuery.andWhere('product.isSaleable = :isSaleable', {
-              isSaleable: fil.value,
+          if (fil.key === 'cateDisplayed') {
+            productQuery.andWhere('category.displayed = :cateDisplayed', {
+              cateDisplayed: fil.value,
             });
           }
           if (fil.key === 'isActive') {
@@ -216,6 +224,8 @@ export class ProductService {
       relations: {
         image: true,
         store: true,
+        category: true,
+        toppingCategory: true,
       },
       where: { id },
     });
@@ -305,9 +315,6 @@ export class ProductService {
       if (!data.image?.id) delete data.image;
       const dataToSave = {
         ...data,
-        toppingCategory: data.toppingCategory
-          ? JSON.stringify(data.toppingCategory)
-          : null,
         price: data.price ? parseFloat(data.price) : 0,
         originalPrice: data.originalPrice ? parseFloat(data.originalPrice) : 0,
         commissionRate: data.commissionRate

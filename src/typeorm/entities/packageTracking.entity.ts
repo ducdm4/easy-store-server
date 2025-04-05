@@ -9,7 +9,6 @@ import {
   OneToMany,
 } from 'typeorm';
 import { PackagePurchasedEntity } from './packagePurchased.entity';
-import { PackageTrackingProductEntity } from './packageTrackingProduct.entity';
 
 @Entity({ name: 'package-tracking' })
 export class PackageTrackingEntity {
@@ -19,11 +18,9 @@ export class PackageTrackingEntity {
   @ManyToOne(() => PackagePurchasedEntity)
   packagePurchased: PackagePurchasedEntity;
 
-  @OneToMany(
-    () => PackageTrackingProductEntity,
-    (packageTrackingProduct) => packageTrackingProduct.packageTracking,
-  )
-  packageTrackingProduct: PackageTrackingProductEntity[];
+  // number of times used this package in the visit
+  @Column({ nullable: false, default: 1 })
+  timesUsed: number;
 
   @Column({ type: 'datetime', nullable: false })
   usedAt: Date;

@@ -62,6 +62,8 @@ export class PackagesEntity {
   @Column({ default: 1 })
   timesCanUse: number;
   // number of times customer can use the package
+  // timesCanUse, product and combo in package
+  // can not be change if some customer already purchased this package
 
   @Column({ default: true })
   isActive: boolean;
