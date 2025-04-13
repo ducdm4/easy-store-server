@@ -27,6 +27,12 @@ export class PackagePurchasedEntity {
   @Column({ type: 'datetime', nullable: false })
   purchasedAt: Date;
 
+  @Column({ type: 'datetime', nullable: false })
+  validUntil: Date; // customer can use this package until this time
+
+  @Column({ type: Number, nullable: false })
+  timeCanUseLeft: number; // customer can use this package this many times
+
   @ManyToOne(() => StoreEntity)
   @JoinColumn({ name: 'storeId', referencedColumnName: 'id' })
   store: StoreEntity;

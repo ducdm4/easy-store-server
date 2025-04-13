@@ -9,6 +9,9 @@ import { StoresService } from '../store/stores.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
 import { ComboEntity } from 'src/typeorm/entities/combo.entity';
+import { ComboQuantityEntity } from 'src/typeorm/entities/comboQuantity.entity';
+import { ComboProductToppingEntity } from 'src/typeorm/entities/comboProductTopping.entity';
+import { CategoryEntity } from 'src/typeorm/entities/category.entity';
 
 @Injectable()
 export class PackagesService {
@@ -67,6 +70,7 @@ export class PackagesService {
           'packages.price',
           'packages.originalPrice',
           'packages.timesCanUse',
+          'packages.expiryTime',
         ])
         .from(PackagesEntity, 'packages')
         .innerJoinAndMapMany(
@@ -81,11 +85,49 @@ export class PackagesService {
           'productInPackage',
           'packageProductQuantity.productId = productInPackage.id',
         )
+        .leftJoinAndSelect(
+          'productInPackage.category',
+          'productInPackageCategory',
+        )
+        .leftJoinAndSelect(
+          'productInPackage.toppingCategory',
+          'toppingCategory',
+        )
         .leftJoinAndMapOne(
           'packageProductQuantity.combo',
           ComboEntity,
           'comboInPackage',
           'packageProductQuantity.comboId = comboInPackage.id',
+        )
+        .leftJoinAndMapMany(
+          'comboInPackage.comboQuantity',
+          ComboQuantityEntity,
+          'comboQuantity',
+          'comboInPackage.id = comboQuantity.comboId',
+        )
+        .leftJoinAndMapOne(
+          'comboQuantity.productUsed',
+          ProductEntity,
+          'productCombo',
+          'comboQuantity.productUsedId = productCombo.id',
+        )
+        .leftJoinAndSelect('productCombo.image', 'productComboImage')
+        .leftJoinAndSelect('productCombo.toppingCategory', 'toppingCategory2')
+        .leftJoinAndMapMany(
+          'comboQuantity.toppingQuantity',
+          ComboProductToppingEntity,
+          'toppingQuantity',
+          'comboQuantity.id = toppingQuantity.comboQuantityId',
+        )
+        .leftJoinAndMapOne(
+          'toppingQuantity.product',
+          ProductEntity,
+          'productToppingUsed',
+          'toppingQuantity.productId = productToppingUsed.id',
+        )
+        .leftJoinAndSelect(
+          'productToppingUsed.image',
+          'productToppingUsedImage',
         )
         .leftJoinAndSelect('packages.image', 'photo')
         .leftJoinAndSelect('productInPackage.image', 'productInPackagePhoto')
@@ -224,9 +266,13 @@ export class PackagesService {
         packageInfo.store.id.toString(),
       );
       if (storeCheck) {
-        const newPackage = {
-          ...packageInfo,
-          ...data,
+        // can not edit name and items in package
+        const dataToUpdate = {
+          description: data.description,
+          timesCanUse: data.timesCanUse,
+          commissionType: data.commissionType,
+          expiryTime: data.expiryTime,
+          image: data.image,
           price: data.price ? parseFloat(data.price) : 0,
           commissionRate: data.commissionRate
             ? parseFloat(data.commissionRate)
@@ -234,6 +280,10 @@ export class PackagesService {
           originalPrice: data.originalPrice
             ? parseFloat(data.originalPrice)
             : 0,
+        };
+        const newPackage = {
+          ...packageInfo,
+          ...dataToUpdate,
         };
 
         if (!newPackage.image || !newPackage.image.id) {

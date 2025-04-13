@@ -13,6 +13,7 @@ import { ComboEntity } from './combo.entity';
 import { ReceiptEntity } from './receipt.entity';
 import { PackagesEntity } from './package.entity';
 import { ReceiptProductToppingEntity } from './receiptProductTopping.entity';
+import { PackagePurchasedEntity } from './packagePurchased.entity';
 
 @Entity({ name: 'receipt-products' })
 export class ReceiptProductEntity {
@@ -32,6 +33,10 @@ export class ReceiptProductEntity {
   package: PackagesEntity;
   // will need to save both packageId and productId or packageId and comboId and productId
   // in case customer choose package contain both product and combo
+
+  @ManyToOne(() => PackagePurchasedEntity)
+  packagePurchased: PackagePurchasedEntity;
+  // to determine what purchased package product or combo belong to
 
   @OneToMany(
     () => ReceiptProductToppingEntity,
