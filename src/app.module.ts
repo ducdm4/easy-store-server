@@ -19,6 +19,7 @@ import { MoneyTransactionsController } from './moneyTransactions/moneyTransactio
 import { ComboController } from './combo/combo.controller';
 import { PackagesController } from './packages/packages.controller';
 import { ProductTransactionsController } from './productTransactions/productTransactions.controller';
+import { ReceiptController } from './receipt/receipt.controller';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { DatabaseModule } from './database/database.module';
@@ -37,6 +38,7 @@ import { ComboModule } from './combo/combo.module';
 import { PromoModule } from './promo/promo.module';
 import { PackagesModule } from './packages/packages.module';
 import { ProductTransactionsModule } from './productTransactions/productTransactions.module';
+import { ReceiptModule } from './receipt/receipt.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -65,6 +67,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     PromoModule,
     CategoryModule,
     CustomerModule,
+    ReceiptModule,
   ],
   providers: [],
 })
@@ -88,6 +91,7 @@ export class AppModule implements NestModule {
         PromoController,
         CategoryController,
         CustomerController,
+        ReceiptController,
       );
   }
 }

@@ -30,8 +30,21 @@ export class ReceiptEntity {
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   total: number; // total after discount
 
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  totalDiscountAmount: number; // total money deducted from subtotal
+
   @Column({ nullable: true })
   extraDiscount: number; // extra discount from owner, employee, ...(by percentage)
+  // need manager access if above 20%
+
+  @Column({ default: 0 })
+  status: number;
+  // 0: temporary save, 1: completed, 2: cancelled from temporary save,
+  // 3: cancelled from completed (need manager access)
+
+  @Column({ default: 0 })
+  type: number;
+  // 0: take away, 1: dine-in, 2: delivery
 
   @Column({ nullable: true })
   pointRewarded: number; // point rewarded from this receipt

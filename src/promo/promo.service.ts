@@ -5,24 +5,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { In, Like, Not, Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import {
   CreatePromoCampaignDto,
   CreatePromoCodeDto,
   UpdatePromoCampaignDto,
   UpdatePromoCodeDto,
 } from './dto/promo.dto';
-import {
-  KeyValue,
-  PROMO_CAMPAIGN_STATUS,
-  PROMO_CODE_STATUS,
-  PROMO_TYPE,
-} from 'src/common/constant';
+import { PROMO_CAMPAIGN_STATUS, PROMO_CODE_STATUS } from 'src/common/constant';
 import { PromoCodeEntity } from '../typeorm/entities/promoCode.entity';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
-import moment from 'moment';
 import { ProductEntity } from 'src/typeorm/entities/product.entity';
 import { ComboEntity } from 'src/typeorm/entities/combo.entity';
 import { PackagesEntity } from 'src/typeorm/entities/package.entity';
@@ -604,5 +598,13 @@ export class PromoService {
       await this.promoCampaignRepository.save(newCampaign);
       return newCampaign.id;
     }
+  }
+
+  async holdPromoCode(
+    id: number,
+    data: UpdatePromoCampaignDto,
+    storeList: Array<{ id: string }>,
+  ) {
+    return true;
   }
 }

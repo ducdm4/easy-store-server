@@ -6,8 +6,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
 import { StoreEntity } from './store.entity';
 import { ProductEntity } from './product.entity';

@@ -26,7 +26,7 @@ import { PromoService } from './promo.service';
 import { Roles } from '../common/decorator/roles.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { KeyValue, ROLE_LIST } from '../common/constant';
-import { getFilterObject } from 'src/common/function';
+import { getFilterObject, getStoreListForCheck } from 'src/common/function';
 import { HttpExceptionFilter } from 'src/common/filter/http-exception.filter';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { UserLoggedInDto } from 'src/user/dto/user.dto';
@@ -113,7 +113,7 @@ export class PromoController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
   @Get('/code/:code')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -124,9 +124,10 @@ export class PromoController {
   ) {
     try {
       const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
       const code = await this.promoService.getDetailPromoCode(
         params.code,
-        user.storeList,
+        storeList,
       );
       res.status(HttpStatus.OK).json({ data: code });
     } catch (e) {
@@ -134,7 +135,29 @@ export class PromoController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
+  @Post('/hold-code/:code')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async holdPromoCode(
+    @Param() params: { code: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
+      const code = await this.promoService.getDetailPromoCode(
+        params.code,
+        storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: code });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
   @Get('/campaign/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -145,9 +168,10 @@ export class PromoController {
   ) {
     try {
       const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
       const campaign = await this.promoService.getDetailPromoCampaign(
         params.id,
-        user.storeList,
+        storeList,
       );
       res.status(HttpStatus.OK).json({ data: campaign });
     } catch (e) {

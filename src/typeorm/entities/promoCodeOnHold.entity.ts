@@ -1,16 +1,13 @@
 import {
-  Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
   ManyToOne,
-  ManyToMany,
-  JoinTable,
 } from 'typeorm';
 import { PromoCodeEntity } from './promoCode.entity';
-import { CustomerEntity } from './customer.entity';
+import { ReceiptEntity } from './receipt.entity';
 
 @Entity({ name: 'promo-code-on-hold' })
 export class PromoCodeOnHoleEntity {
@@ -20,8 +17,8 @@ export class PromoCodeOnHoleEntity {
   @ManyToOne(() => PromoCodeEntity)
   code: PromoCodeEntity;
 
-  @ManyToOne(() => CustomerEntity)
-  customer: CustomerEntity;
+  @ManyToOne(() => ReceiptEntity)
+  receipt: ReceiptEntity;
 
   @CreateDateColumn()
   createdAt: Date;
