@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { In, QueryRunner, Repository } from 'typeorm';
+import { In, Not, QueryRunner, Repository } from 'typeorm';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
@@ -115,31 +115,6 @@ export class ReceiptService {
           'receiptProductsToppingProduct',
           'receiptProductsToppingProduct.id = receiptProductsTopping.productId',
         ) // get receipt products topping product info
-        // .leftJoinAndMapOne(
-        //   'comboQuantity.productUsed',
-        //   ProductEntity,
-        //   'productCombo',
-        //   'comboQuantity.productUsedId = productCombo.id',
-        // )
-        // .leftJoinAndMapMany(
-        //   'comboQuantity.toppingQuantity',
-        //   ComboProductToppingEntity,
-        //   'toppingQuantity',
-        //   'comboQuantity.id = toppingQuantity.comboQuantityId',
-        // )
-        // .leftJoinAndMapOne(
-        //   'toppingQuantity.product',
-        //   ProductEntity,
-        //   'productToppingUsed',
-        //   'toppingQuantity.productId = productToppingUsed.id',
-        // )
-        // .leftJoinAndSelect('combo.image', 'photo')
-        // .leftJoinAndSelect('productCombo.toppingCategory', 'toppingCategory')
-        // .leftJoinAndSelect(
-        //   'productToppingUsed.image',
-        //   'productToppingUsedImage',
-        // )
-        // .leftJoinAndSelect('productCombo.image', 'image')
         .where('receipt.storeId = :storeId', { storeId });
       if (findOptions.paging.page !== 0) {
         receiptQuery.skip(
@@ -251,18 +226,38 @@ export class ReceiptService {
         const currentReceipt = data.id
           ? await this.getReceiptByCode(data.code)
           : null;
+        if (data.customer.id) {
+          const currentCustomerReceipt = await queryRunner.manager.find(
+            ReceiptEntity,
+            {
+              relations: {
+                customer: true,
+              },
+              where: {
+                customer: {
+                  id: data.customer.id,
+                },
+                id: Not(data.id),
+              },
+            },
+          );
+          if (currentCustomerReceipt.length > 0) {
+            throw new BadRequestException(
+              'Customer already have another on going receipt',
+            );
+          }
+        }
         newReceipt = await queryRunner.manager.save(newReceipt);
         returnData = {
           ...newReceipt,
           receiptProducts: [],
         };
-        // TODO: save package purchased if there is any package
+        let currentReceiptProductIds = data.id
+          ? currentReceipt.receiptProducts.map((item) => item.id)
+          : [];
+
         if (data.receiptProducts.length > 0) {
           returnData.receiptProducts = [];
-          let currentReceiptProductIds = data.id
-            ? currentReceipt.receiptProducts.map((item) => item.id)
-            : [];
-
           // used to mark product or combo or package as been used
           const newPackagePurchasedInThisReceipt = [];
           const markUsedOfPackageUnPurchasedProduct = [];
@@ -362,20 +357,17 @@ export class ReceiptService {
               allPackageTrackingInDB,
             );
           }
-
-          // delete removed products from DB and topping belongs to them
-          for (const item of currentReceiptProductIds) {
+        } else {
+          // delete removed receipt product from DB
+          if (currentReceiptProductIds.length > 0) {
             await queryRunner.manager.delete(ReceiptProductToppingEntity, {
               receiptProduct: {
-                id: item,
+                id: In(currentReceiptProductIds),
               },
             });
-          }
-          if (currentReceiptProductIds.length > 0) {
-            await queryRunner.manager.delete(
-              ReceiptProductEntity,
-              currentReceiptProductIds.map((item) => ({ id: item })),
-            );
+            await queryRunner.manager.delete(ReceiptProductEntity, {
+              id: In(currentReceiptProductIds),
+            });
           }
         }
         await queryRunner.commitTransaction();
@@ -383,7 +375,7 @@ export class ReceiptService {
       } catch (err) {
         console.log(err);
         await queryRunner.rollbackTransaction();
-        throw new InternalServerErrorException('Something went wrong');
+        throw err;
       } finally {
         await queryRunner.release();
       }
@@ -574,10 +566,10 @@ export class ReceiptService {
       return res;
     });
     // delete removed topping for current product from DB
-    if (currentReceiptProductIds.length > 0) {
+    if (currentToppingIds.length > 0) {
       await queryRunner.manager.delete(
         ReceiptProductToppingEntity,
-        currentReceiptProductIds.map((item) => ({ id: item })),
+        currentToppingIds.map((item) => ({ id: item.id })),
       );
     }
 
@@ -850,12 +842,21 @@ export class ReceiptService {
           throw new NotFoundException('Package purchased not found');
         } else {
           const packageTracking = await this.packageTrackingRepository.find({
+            relations: {
+              packagePurchased: true,
+            },
             where: {
-              packagePurchased,
+              packagePurchased: {
+                id: packagePurchasedId,
+              },
             },
           });
-          await this.packageTrackingRepository.remove(packageTracking);
-          await this.packagePurchasedRepository.remove(packagePurchased);
+          await this.packageTrackingRepository.delete({
+            id: In(packageTracking.map((item) => item.id)),
+          });
+          await this.packagePurchasedRepository.delete({
+            id: packagePurchasedId,
+          });
           return true;
         }
       } else {
