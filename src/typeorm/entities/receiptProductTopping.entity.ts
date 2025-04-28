@@ -25,6 +25,9 @@ export class ReceiptProductToppingEntity {
   @Column({ default: 1, type: 'decimal', precision: 5, scale: 1 })
   quantity: number;
 
+  @Column({ default: false })
+  isInCombo: boolean;
+
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
   price: number; // sale price
 

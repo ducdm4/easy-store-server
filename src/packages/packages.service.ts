@@ -73,7 +73,7 @@ export class PackagesService {
           'packages.expiryTime',
         ])
         .from(PackagesEntity, 'packages')
-        .innerJoinAndMapMany(
+        .leftJoinAndMapMany(
           'packages.packageProductQuantity',
           PackageProductQuantityEntity,
           'packageProductQuantity',
@@ -268,6 +268,7 @@ export class PackagesService {
       if (storeCheck) {
         // can not edit name and items in package
         const dataToUpdate = {
+          name: data.name,
           description: data.description,
           timesCanUse: data.timesCanUse,
           commissionType: data.commissionType,

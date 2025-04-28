@@ -49,4 +49,69 @@ export class ReceiptController {
       throw e;
     }
   }
+
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
+  @Get('/')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async getListReceiptFiltered(@Req() req: Request, @Res() res: Response) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
+      const filterOption = getFilterObject(req);
+      const list = await this.receiptService.getListReceiptFiltered(
+        req.query['storeId'].toString(),
+        storeList,
+        filterOption,
+      );
+      res.status(HttpStatus.OK).json({ data: list });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
+  @Get('/code/:code')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async getReceiptByCode(
+    @Param() params: { code: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
+      const list = await this.receiptService.getReceiptByCodeAndStore(
+        params.code,
+        storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: list });
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
+  @Delete('/code/:code/package-purchased/:packagePurchaseId')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async deletePackagePurchased(
+    @Param() params: { code: string; packagePurchaseId: number },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
+      const list = await this.receiptService.deletePackagePurchased(
+        params.code,
+        params.packagePurchaseId,
+        storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: list });
+    } catch (e) {
+      throw e;
+    }
+  }
 }

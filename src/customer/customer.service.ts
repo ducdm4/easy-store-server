@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { CreateCustomerDto, UpdateCustomerDto } from './dto/customer.dto';
@@ -14,12 +15,15 @@ import { SearchInterface } from 'src/common/interface/search.interface';
 import { CustomerEntity } from 'src/typeorm/entities/customer.entity';
 import { PersonalInfoEntity } from 'src/typeorm/entities/personalInfo.entity';
 import { PhotoEntity } from 'src/typeorm/entities/photo.entity';
+import { PackagePurchasedEntity } from 'src/typeorm/entities/packagePurchased.entity';
 
 @Injectable()
 export class CustomerService {
   constructor(
     @Inject('CUSTOMER_REPOSITORY')
     private customerRepository: Repository<CustomerEntity>,
+    @Inject('PACKAGE_PURCHASED_REPOSITORY')
+    private packagePurchasedRepository: Repository<PackagePurchasedEntity>,
     private storesService: StoresService,
     private personalInfoService: PersonalInfoService,
   ) {}
@@ -179,112 +183,63 @@ export class CustomerService {
     }
   }
 
-  // async getComboById(id: number, storeList: Array<{ id: string }>) {
-  //   const combo = await this.comboRepository.findOne({
-  //     relations: {
-  //       store: true,
-  //       comboQuantity: {
-  //         productUsed: {
-  //           image: true,
-  //         },
-  //         toppingQuantity: {
-  //           product: {
-  //             image: true,
-  //           },
-  //         },
-  //       },
-  //       image: true,
-  //     },
-  //     where: {
-  //       id,
-  //     },
-  //   });
-  //   if (combo) {
-  //     const storeCheck = await this.storesService.checkStoreOwner(
-  //       storeList,
-  //       combo.store.id.toString(),
-  //     );
-  //     if (storeCheck) {
-  //       return combo;
-  //     }
-  //   } else {
-  //     throw new NotFoundException('Combo not found');
-  //   }
-  // }
-
-  // async updateComboStatus(id: number, storeList: Array<{ id: string }>) {
-  //   const combo = await this.comboRepository.findOne({
-  //     relations: {
-  //       store: true,
-  //     },
-  //     where: {
-  //       id,
-  //     },
-  //   });
-  //   if (!combo) {
-  //     throw new NotFoundException('Combo not found');
-  //   } else {
-  //     const storeCheck = await this.storesService.checkStoreOwner(
-  //       storeList,
-  //       combo.store.id.toString(),
-  //     );
-  //     if (storeCheck) {
-  //       const newCombo = {
-  //         ...combo,
-  //         isActive: !combo.isActive,
-  //       };
-  //       await this.comboRepository.save(newCombo);
-  //       return newCombo;
-  //     }
-  //   }
-  // }
-
-  // async deleteCombo(id: number, storeList: Array<{ id: string }>) {
-  //   const combo = await this.comboRepository.findOne({
-  //     relations: {
-  //       store: true,
-  //       image: true,
-  //       comboQuantity: {
-  //         toppingQuantity: true,
-  //       },
-  //     },
-  //     where: {
-  //       id,
-  //     },
-  //   });
-  //   if (!combo) {
-  //     throw new NotFoundException('Combo not found');
-  //   } else {
-  //     const storeCheck = await this.storesService.checkStoreOwner(
-  //       storeList,
-  //       combo.store.id.toString(),
-  //     );
-  //     if (storeCheck) {
-  //       await this.comboRepository.softRemove(combo);
-  //       return true;
-  //     }
-  //   }
-  // }
-
-  // async getAllByStoreId(storeId: number, storeList: Array<{ id: string }>) {
-  //   const storeCheck = await this.storesService.checkStoreOwner(
-  //     storeList,
-  //     storeId.toString(),
-  //   );
-  //   if (storeCheck) {
-  //     const combo = await this.comboRepository.find({
-  //       relations: {
-  //         store: true,
-  //         image: true,
-  //       },
-  //       where: {
-  //         store: {
-  //           id: storeId,
-  //         },
-  //         isActive: true,
-  //       },
-  //     });
-  //     return combo;
-  //   }
-  // }
+  async getPackagePurchasedByCustomer(
+    customerId: string,
+    storeList: Array<{ id: string }>,
+  ) {
+    const customer = await this.customerRepository.findOne({
+      relations: {
+        personalInfo: true,
+        store: true,
+      },
+      where: {
+        id: Number(customerId),
+      },
+    });
+    if (!customer) {
+      throw new NotFoundException('Customer not found');
+    }
+    const storeCheck = await this.storesService.checkStoreOwner(
+      storeList,
+      customer.store.id.toString(),
+    );
+    if (storeCheck) {
+      const packagePurchased = await this.packagePurchasedRepository.find({
+        relations: {
+          package: {
+            image: true,
+            packageProductQuantity: {
+              product: {
+                image: true,
+                toppingCategory: true,
+                category: true,
+              },
+              combo: {
+                comboQuantity: {
+                  productUsed: true,
+                  toppingQuantity: {
+                    product: true,
+                  },
+                },
+              },
+            },
+          },
+          customer: true,
+        },
+        where: {
+          customer: {
+            id: Number(customerId),
+          },
+        },
+      });
+      if (packagePurchased) {
+        return packagePurchased;
+      }
+      return [];
+    } else {
+      throw new UnauthorizedException(
+        'You are not authorized to access this resource',
+      );
+    }
+  }
 }

@@ -9,6 +9,7 @@ import { StoreProviders } from '../typeorm/providers/store.providers';
 import { UserProviders } from '../typeorm/providers/user.providers';
 import { PhotoProviders } from '../typeorm/providers/photo.providers';
 import { CustomerProviders } from '../typeorm/providers/customer.providers';
+import { PackagePurchasedProviders } from '../typeorm/providers/packagePurchased.providers';
 import { PersonalInfoProviders } from '../typeorm/providers/personalInfo.providers';
 
 @Module({
@@ -20,6 +21,7 @@ import { PersonalInfoProviders } from '../typeorm/providers/personalInfo.provide
     ...UserProviders,
     ...PhotoProviders,
     ...CustomerProviders,
+    ...PackagePurchasedProviders,
     CustomerService,
     StoresService,
     PersonalInfoService,

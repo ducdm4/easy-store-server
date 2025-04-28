@@ -74,27 +74,6 @@ export class CustomerController {
     }
   }
 
-  // @Roles([ROLE_LIST.STORE_OWNER])
-  // @Get('/:id')
-  // @UseGuards(AuthGuard('jwt'), RolesGuard)
-  // @UseFilters(new HttpExceptionFilter())
-  // async getComboInfo(
-  //   @Param() params: { id: number },
-  //   @Req() req: Request,
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const user = req.user as UserLoggedInDto;
-  //     const combo = await this.comboService.getComboById(
-  //       params.id,
-  //       user.storeList,
-  //     );
-  //     res.status(HttpStatus.OK).json({ data: combo });
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
-
   @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
   @Put('/:id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -121,45 +100,25 @@ export class CustomerController {
     }
   }
 
-  // @Roles([ROLE_LIST.STORE_OWNER])
-  // @Patch('/:id')
-  // @UseGuards(AuthGuard('jwt'), RolesGuard)
-  // @UseFilters(new HttpExceptionFilter())
-  // async updateComboStatus(
-  //   @Param() params: { id: string },
-  //   @Req() req: Request,
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const user = req.user as UserLoggedInDto;
-  //     const combo = await this.comboService.updateComboStatus(
-  //       parseInt(params.id),
-  //       user.storeList,
-  //     );
-  //     res.status(HttpStatus.OK).json({ data: combo });
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
-
-  // @Roles([ROLE_LIST.STORE_OWNER])
-  // @Delete('/:id')
-  // @UseGuards(AuthGuard('jwt'), RolesGuard)
-  // @UseFilters(new HttpExceptionFilter())
-  // async deleteCombo(
-  //   @Param() params: { id: string },
-  //   @Req() req: Request,
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const user = req.user as UserLoggedInDto;
-  //     const combo = await this.comboService.deleteCombo(
-  //       parseInt(params.id),
-  //       user.storeList,
-  //     );
-  //     res.status(HttpStatus.OK).json({ data: combo });
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
+  @Get('/:id/package-purchased')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseFilters(new HttpExceptionFilter())
+  async getPackagePurchasedByCustomer(
+    @Param() params: { id: string },
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
+      const customer = await this.customerService.getPackagePurchasedByCustomer(
+        params.id,
+        storeList,
+      );
+      res.status(HttpStatus.OK).json({ data: customer });
+    } catch (e) {
+      throw e;
+    }
+  }
 }
