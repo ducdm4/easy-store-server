@@ -25,7 +25,7 @@ export class ReceiptProduct {
 
   quantity: number;
   price: number;
-  priceDiscounted: number;
+  discounted: number;
   note: string;
   groupNumber: number;
 
@@ -35,7 +35,7 @@ export class ReceiptProduct {
     product: CommonIdDto;
     quantity: number;
     price: number;
-    priceDiscounted: number;
+    discounted: number;
     isInCombo: boolean;
   }[];
 }
@@ -57,9 +57,30 @@ export class CreateReceiptDto {
     id?: number;
   };
   note: string;
-  totalDiscountAmount: number;
+  deliveryAddress: string;
+  deliveryName: string;
+  deliveryPhone: string;
+  totalItemDiscount: number;
+  discounted: number;
+  deliveryFee: number;
 
   @IsNotEmpty()
   @IsNumber()
   storeId: number;
+
+  promoList: ReceiptPromoDto[];
+}
+export class ReceiptPromoDto {
+  id?: number;
+  code: {
+    id: number;
+    code: string;
+  };
+  campaign: {
+    id: number;
+  };
+  campaignBonus: {
+    id: number;
+  };
+  discountedAmount: number;
 }

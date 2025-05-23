@@ -2,12 +2,12 @@ import {
   BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { In, Not, QueryRunner, Repository } from 'typeorm';
 import { dataSource } from '../database/database.providers';
 import { StoresService } from '../store/stores.service';
+import { PromoService } from '../promo/promo.service';
 import { SearchInterface } from 'src/common/interface/search.interface';
 import { ReceiptEntity } from 'src/typeorm/entities/receipt.entity';
 import { ReceiptProductToppingEntity } from 'src/typeorm/entities/receiptProductTopping.entity';
@@ -16,17 +16,15 @@ import { ComboEntity } from 'src/typeorm/entities/combo.entity';
 import { PackagesEntity } from 'src/typeorm/entities/package.entity';
 import {
   CreateReceiptDto,
-  PackagePurchasedDto,
-  PackagePurchasedUpdateDto,
   ReceiptProduct,
+  ReceiptPromoDto,
 } from './dto/receipt.dto';
-import { KeyValue, RECEIPT_STATUS, RECEIPT_TYPE } from 'src/common/constant';
+import { KeyValue, RECEIPT_STATUS } from 'src/common/constant';
 import * as moment from 'moment';
 import { ReceiptProductEntity } from 'src/typeorm/entities/receiptProduct.entity';
-import { CustomerEntity } from 'src/typeorm/entities/customer.entity';
-import { EmployeeInfoEntity } from 'src/typeorm/entities/employeeInfo.entity';
 import { PackagePurchasedEntity } from 'src/typeorm/entities/packagePurchased.entity';
 import { PackageTrackingEntity } from 'src/typeorm/entities/packageTracking.entity';
+import { ReceiptPromoEntity } from 'src/typeorm/entities/receiptPromo.entity';
 
 @Injectable()
 export class ReceiptService {
@@ -47,7 +45,10 @@ export class ReceiptService {
     private packagePurchasedRepository: Repository<PackagePurchasedEntity>,
     @Inject('PACKAGE_TRACKING_REPOSITORY')
     private packageTrackingRepository: Repository<PackageTrackingEntity>,
+    @Inject('RECEIPT_PROMO_REPOSITORY')
+    private receiptPromoRepository: Repository<ReceiptPromoEntity>,
     private storesService: StoresService,
+    private promoService: PromoService,
   ) {}
 
   async getListReceiptFiltered(
@@ -68,7 +69,8 @@ export class ReceiptService {
           'receipt.note',
           'receipt.subTotal',
           'receipt.total',
-          'receipt.totalDiscountAmount',
+          'receipt.totalItemDiscount',
+          'receipt.discounted',
           'receipt.extraDiscount',
           'receipt.status',
           'receipt.type',
@@ -215,9 +217,14 @@ export class ReceiptService {
           customer: data.customer ? { id: data.customer.id } : null,
           total: data.total,
           subTotal: data.subTotal,
-          totalDiscountAmount: data.totalDiscountAmount,
+          totalItemDiscount: data.totalItemDiscount,
+          discounted: data.discounted,
           extraDiscount: data.extraDiscount,
           note: data.note,
+          deliveryAddress: data.deliveryAddress,
+          deliveryName: data.deliveryName,
+          deliveryPhone: data.deliveryPhone,
+          deliveryFee: data.deliveryFee,
           status: RECEIPT_STATUS.TEMPORARY_SAVE,
           code,
         });
@@ -226,7 +233,7 @@ export class ReceiptService {
         const currentReceipt = data.id
           ? await this.getReceiptByCode(data.code)
           : null;
-        if (data.customer.id) {
+        if (data.customer?.id) {
           const currentCustomerReceipt = await queryRunner.manager.find(
             ReceiptEntity,
             {
@@ -256,6 +263,11 @@ export class ReceiptService {
           ? currentReceipt.receiptProducts.map((item) => item.id)
           : [];
 
+        this.handleUpdateReceiptPromo(
+          data.promoList,
+          newReceipt.id,
+          newReceipt.store.id,
+        );
         if (data.receiptProducts.length > 0) {
           returnData.receiptProducts = [];
           // used to mark product or combo or package as been used
@@ -265,7 +277,12 @@ export class ReceiptService {
           // loop all receipt product
           for (const item of data.receiptProducts) {
             // handle if this item is a package
-            if (!item.product && !item.combo && !item.id) {
+            if (
+              newReceipt.customer?.id &&
+              !item.product &&
+              !item.combo &&
+              !item.id
+            ) {
               const packagePurchased = await this.createNewPackagePurchased(
                 newReceipt,
                 item.package,
@@ -273,12 +290,15 @@ export class ReceiptService {
               );
               newPackagePurchasedInThisReceipt.push(packagePurchased);
             }
-            await this.handlePackagePurchased(
-              item,
-              newPackagePurchasedInThisReceipt,
-              markUsedOfPackageUnPurchasedProduct,
-              markUsedOfAlreadyPurchasedPackage,
-            );
+            if (newReceipt.customer?.id) {
+              await this.handlePackagePurchased(
+                item,
+                newPackagePurchasedInThisReceipt,
+                markUsedOfPackageUnPurchasedProduct,
+                markUsedOfAlreadyPurchasedPackage,
+              );
+            }
+
             const res = await this.handleSaveReceiptProduct(
               item,
               newReceipt,
@@ -289,86 +309,93 @@ export class ReceiptService {
             returnData.receiptProducts.push(res.newItem);
             currentReceiptProductIds = res.currentReceiptProductIds;
           }
-          // update record in packageTracking
-          const packageTrackingToUpdate = [];
-          for (const packageUsed of markUsedOfPackageUnPurchasedProduct) {
-            const newPackageTracking = this.packageTrackingRepository.create({
-              packagePurchased:
-                newPackagePurchasedInThisReceipt[packageUsed.index],
-              receipt: newReceipt,
-              timesUsed: packageUsed.pkgPurchasedGrpNumList.length,
-              usedAt: new Date(),
-            });
-            newPackagePurchasedInThisReceipt[packageUsed.index].timeCanUseLeft =
-              newPackagePurchasedInThisReceipt[packageUsed.index]
-                .timeCanUseLeft - packageUsed.pkgPurchasedGrpNumList.length;
-            packageTrackingToUpdate.push(newPackageTracking);
-          }
-          await queryRunner.manager.save(newPackagePurchasedInThisReceipt);
-          // handle all saved packagePurchased
-          const allPackageTrackingInDB =
-            await this.packageTrackingRepository.find({
-              relations: ['packagePurchased', 'receipt'],
-              where: {
-                packagePurchased: {
-                  customer: {
-                    id: newReceipt.customer.id,
-                  },
-                },
-              },
-            });
-          const allPackageTrackingInDBToCalculate =
-            allPackageTrackingInDB.filter(
-              (tracking) => tracking.receipt.id === newReceipt.id,
-            );
-          for (const packageUsed of markUsedOfAlreadyPurchasedPackage) {
-            const packageTrackingIndex =
-              allPackageTrackingInDBToCalculate.findIndex(
-                (tracking) =>
-                  tracking.packagePurchased.id ===
-                    packageUsed.packagePurchased.id &&
-                  tracking.receipt.id === newReceipt.id,
-              );
-            if (packageTrackingIndex > -1) {
-              const packageTracking =
-                allPackageTrackingInDBToCalculate[packageTrackingIndex];
-              packageTracking.timesUsed =
-                packageUsed.packagePurchasedGroupNumber.length;
-              packageTrackingToUpdate.push(packageTracking);
-              allPackageTrackingInDBToCalculate.splice(packageTrackingIndex, 1);
-            } else {
+          // only update package related if already has a customer set
+          if (newReceipt.customer?.id) {
+            // update record in packageTracking
+            const packageTrackingToUpdate = [];
+            // loop every item in an un-purchased package
+            for (const packageUsed of markUsedOfPackageUnPurchasedProduct) {
               const newPackageTracking = this.packageTrackingRepository.create({
-                packagePurchased: packageUsed.packagePurchased,
+                packagePurchased:
+                  newPackagePurchasedInThisReceipt[packageUsed.index],
                 receipt: newReceipt,
-                timesUsed: packageUsed.packagePurchasedGroupNumber.length,
+                timesUsed: packageUsed.pkgPurchasedGrpNumList.length,
                 usedAt: new Date(),
               });
+              newPackagePurchasedInThisReceipt[
+                packageUsed.index
+              ].timeCanUseLeft =
+                newPackagePurchasedInThisReceipt[packageUsed.index]
+                  .timeCanUseLeft - packageUsed.pkgPurchasedGrpNumList.length;
               packageTrackingToUpdate.push(newPackageTracking);
             }
-          }
+            await queryRunner.manager.save(newPackagePurchasedInThisReceipt);
+            // handle all saved packagePurchased
+            const allPackageTrackingInDB =
+              await this.packageTrackingRepository.find({
+                relations: ['packagePurchased', 'receipt'],
+                where: {
+                  packagePurchased: {
+                    customer: {
+                      id: newReceipt.customer.id,
+                    },
+                  },
+                },
+              });
+            const allPackageTrackingInDBToCalculate =
+              allPackageTrackingInDB.filter(
+                (tracking) => tracking.receipt.id === newReceipt.id,
+              );
+            for (const packageUsed of markUsedOfAlreadyPurchasedPackage) {
+              const packageTrackingIndex =
+                allPackageTrackingInDBToCalculate.findIndex(
+                  (tracking) =>
+                    tracking.packagePurchased.id ===
+                      packageUsed.packagePurchased.id &&
+                    tracking.receipt.id === newReceipt.id,
+                );
+              if (packageTrackingIndex > -1) {
+                const packageTracking =
+                  allPackageTrackingInDBToCalculate[packageTrackingIndex];
+                packageTracking.timesUsed =
+                  packageUsed.packagePurchasedGroupNumber.length;
+                packageTrackingToUpdate.push(packageTracking);
+                allPackageTrackingInDBToCalculate.splice(
+                  packageTrackingIndex,
+                  1,
+                );
+              } else {
+                const newPackageTracking =
+                  this.packageTrackingRepository.create({
+                    packagePurchased: packageUsed.packagePurchased,
+                    receipt: newReceipt,
+                    timesUsed: packageUsed.packagePurchasedGroupNumber.length,
+                    usedAt: new Date(),
+                  });
+                packageTrackingToUpdate.push(newPackageTracking);
+              }
+            }
 
-          await queryRunner.manager.save(packageTrackingToUpdate);
-          await queryRunner.manager.delete(PackageTrackingEntity, {
-            id: In(allPackageTrackingInDBToCalculate.map((item) => item.id)),
-          });
-          if (newReceipt.customer?.id) {
+            await queryRunner.manager.save(packageTrackingToUpdate);
+            await queryRunner.manager.delete(PackageTrackingEntity, {
+              id: In(allPackageTrackingInDBToCalculate.map((item) => item.id)),
+            });
             this.handleUpdateTimeCanUseLeft(
               newReceipt.customer.id,
               allPackageTrackingInDB,
             );
           }
-        } else {
-          // delete removed receipt product from DB
-          if (currentReceiptProductIds.length > 0) {
-            await queryRunner.manager.delete(ReceiptProductToppingEntity, {
-              receiptProduct: {
-                id: In(currentReceiptProductIds),
-              },
-            });
-            await queryRunner.manager.delete(ReceiptProductEntity, {
+        }
+        // delete removed receipt product from DB
+        if (currentReceiptProductIds.length > 0) {
+          await queryRunner.manager.delete(ReceiptProductToppingEntity, {
+            receiptProduct: {
               id: In(currentReceiptProductIds),
-            });
-          }
+            },
+          });
+          await queryRunner.manager.delete(ReceiptProductEntity, {
+            id: In(currentReceiptProductIds),
+          });
         }
         await queryRunner.commitTransaction();
         return this.getReceiptByCode(newReceipt.code);
@@ -382,6 +409,99 @@ export class ReceiptService {
     }
 
     return false;
+  }
+
+  async handleUpdateReceiptPromo(
+    promoList: Array<ReceiptPromoDto>,
+    receiptId: number,
+    storeId: number,
+  ) {
+    const currentPromoCodeListInReceipt =
+      await this.receiptPromoRepository.find({
+        where: {
+          receipt: {
+            id: receiptId,
+          },
+        },
+        relations: ['code', 'campaign'],
+      });
+    const listToBeDelete = currentPromoCodeListInReceipt.filter(
+      (item) => !promoList.find((promo) => promo.id === item.id),
+    );
+    await this.receiptPromoRepository.save(
+      promoList.map((item) => {
+        const code = item.code ? { id: item.code.id } : null;
+        const campaign = item.campaign ? { id: item.campaign.id } : null;
+        const campaignBonus = item.campaignBonus
+          ? { id: item.campaignBonus.id }
+          : null;
+        const newItem = this.receiptPromoRepository.create({
+          receipt: {
+            id: receiptId,
+          },
+          code,
+          campaign,
+          campaignBonus,
+          discountedAmount: item.discountedAmount,
+        });
+        if (item.id) newItem.id = item.id;
+        return newItem;
+      }),
+    );
+    if (listToBeDelete.length > 0) {
+      await this.receiptPromoRepository.delete(
+        listToBeDelete.map((item) => item.id),
+      );
+    }
+    this.updateUsedPromoCodeCount([...listToBeDelete, ...promoList], storeId);
+    this.updateUsedPromoCampaignCount(
+      [...listToBeDelete, ...promoList],
+      storeId,
+    );
+  }
+
+  async updateUsedPromoCodeCount(
+    promoList: Array<ReceiptPromoDto>,
+    storeId: number,
+  ) {
+    const codeList = promoList.filter((item) => item.code);
+    for (const promoCode of codeList) {
+      const count = await this.receiptPromoRepository.count({
+        where: {
+          code: {
+            code: promoCode.code?.code,
+          },
+          receipt: {
+            store: {
+              id: storeId,
+            },
+          },
+        },
+      });
+      this.promoService.updateCountForCode(promoCode.code.id, count);
+    }
+  }
+
+  async updateUsedPromoCampaignCount(
+    promoList: Array<ReceiptPromoDto>,
+    storeId: number,
+  ) {
+    const campaignList = promoList.filter((item) => item.campaign);
+    for (const campaign of campaignList) {
+      const count = await this.receiptPromoRepository.count({
+        where: {
+          campaign: {
+            id: campaign.campaign.id,
+          },
+          receipt: {
+            store: {
+              id: storeId,
+            },
+          },
+        },
+      });
+      this.promoService.updateCountForCampaign(campaign.campaign.id, count);
+    }
   }
 
   async handlePackagePurchased(
@@ -520,7 +640,7 @@ export class ReceiptService {
       packagePurchased: packagePurchasedInfo,
       quantity: item.quantity,
       price: item.price | 0,
-      priceDiscounted: item.priceDiscounted | 0,
+      discounted: item.discounted | 0,
       note: item.note,
       groupNumber: item.groupNumber,
     });
@@ -551,7 +671,7 @@ export class ReceiptService {
         isInCombo: top.isInCombo,
         quantity: Number(top.quantity),
         price: top.price | 0,
-        priceDiscounted: top.priceDiscounted | 0,
+        discounted: top.discounted | 0,
         receiptProduct: newReceiptProduct,
       });
       if (top.id) {
@@ -660,6 +780,7 @@ export class ReceiptService {
     };
     const comboQuantitySelectProperty = {
       id: true,
+      quantity: true,
       productUsed: productSelectProperty,
       toppingQuantity: {
         product: productSelectProperty,
@@ -678,11 +799,16 @@ export class ReceiptService {
         code: true,
         createdAt: true,
         total: true,
-        totalDiscountAmount: true,
+        totalItemDiscount: true,
+        discounted: true,
         subTotal: true,
         type: true,
         status: true,
         note: true,
+        deliveryAddress: true,
+        deliveryFee: true,
+        deliveryName: true,
+        deliveryPhone: true,
         extraDiscount: true,
         customer: {
           id: true,
@@ -697,7 +823,7 @@ export class ReceiptService {
           groupNumber: true,
           note: true,
           price: true,
-          priceDiscounted: true,
+          discounted: true,
           quantity: true,
           product: productSelectProperty,
           combo: {
@@ -728,7 +854,7 @@ export class ReceiptService {
             isInCombo: true,
             quantity: true,
             price: true,
-            priceDiscounted: true,
+            discounted: true,
           },
           packagePurchased: {
             id: true,
@@ -776,7 +902,36 @@ export class ReceiptService {
       },
     });
     if (receipt) {
-      return receipt;
+      const promoList = await this.receiptPromoRepository.find({
+        where: {
+          receipt: {
+            id: receipt.id,
+          },
+        },
+        relations: {
+          code: {
+            product: true,
+            package: true,
+            combo: true,
+          },
+          campaign: {
+            promoCampaignBonus: {
+              product: true,
+              package: true,
+              combo: true,
+            },
+          },
+          campaignBonus: {
+            product: true,
+            package: true,
+            combo: true,
+          },
+        },
+      });
+      return {
+        ...receipt,
+        promoList,
+      };
     } else {
       return null;
     }

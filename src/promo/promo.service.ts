@@ -1,11 +1,12 @@
 import {
+  BadRequestException,
   HttpException,
   HttpStatus,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { In, Repository } from 'typeorm';
+import { In, LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
 import {
   CreatePromoCampaignDto,
   CreatePromoCodeDto,
@@ -203,7 +204,11 @@ export class PromoService {
     }
   }
 
-  async getDetailPromoCode(code: string, storeList: Array<{ id: string }>) {
+  async getDetailPromoCode(
+    code: string,
+    storeList: Array<{ id: string }>,
+    isSale?: boolean,
+  ) {
     const selectItem = {
       id: true,
       name: true,
@@ -230,9 +235,14 @@ export class PromoService {
         product: {
           ...selectItem,
           unit: true,
+          type: true,
         },
         combo: selectItem,
         package: selectItem,
+        store: {
+          id: true,
+          name: true,
+        },
       },
       where: {
         code,
@@ -258,6 +268,17 @@ export class PromoService {
       promoCode.store.id.toString(),
     );
     if (storeCheck) {
+      if (isSale) {
+        if (promoCode.quantity && promoCode.numbersUsed >= promoCode.quantity) {
+          throw new BadRequestException('Promo code is out of stock');
+        }
+        if (promoCode.timeStart > new Date()) {
+          throw new BadRequestException('Promo code is not started yet');
+        }
+        if (promoCode.timeEnd < new Date()) {
+          throw new BadRequestException('Promo code is expired');
+        }
+      }
       return promoCode;
     }
     return null;
@@ -330,9 +351,7 @@ export class PromoService {
       promoInfo.store.id.toString(),
     );
     if (storeCheck) {
-      await this.promoCodeRepository.softRemove({
-        code,
-      });
+      await this.promoCodeRepository.delete(promoInfo);
       return true;
     }
   }
@@ -384,6 +403,7 @@ export class PromoService {
           'promoCampaign.timeStart',
           'promoCampaign.timeEnd',
           'promoCampaign.isPaused',
+          'promoCampaign.canUseWithOther',
         ])
         .leftJoinAndMapMany(
           'promoCampaign.promoCampaignBonus',
@@ -391,12 +411,18 @@ export class PromoService {
           'promoBonus',
           'promoBonus.promoCampaignsId = promoCampaign.id',
         )
+        .leftJoinAndSelect('promoBonus.product', 'promoBonusProduct')
+        .leftJoinAndSelect('promoBonus.combo', 'promoBonusCombo')
+        .leftJoinAndSelect('promoBonus.package', 'promoBonusPackage')
         .leftJoinAndMapMany(
           'promoCampaign.promoCampaignConditions',
           PromoCampaignConditionsEntity,
           'promoConditions',
           'promoConditions.promoCampaignsId = promoCampaign.id',
         )
+        .leftJoinAndSelect('promoConditions.product', 'promoConditionsProduct')
+        .leftJoinAndSelect('promoConditions.combo', 'promoConditionsCombo')
+        .leftJoinAndSelect('promoConditions.package', 'promoConditionsPackage')
         .from(PromoCampaignsEntity, 'promoCampaign')
         .where('promoCampaign.storeId = :storeId', { storeId });
 
@@ -600,11 +626,29 @@ export class PromoService {
     }
   }
 
-  async holdPromoCode(
-    id: number,
-    data: UpdatePromoCampaignDto,
-    storeList: Array<{ id: string }>,
-  ) {
-    return true;
+  async updateCountForCode(codeId: number, count: number) {
+    const promoCode = await this.promoCodeRepository.findOne({
+      where: {
+        id: codeId,
+      },
+    });
+    if (!promoCode) {
+      throw new NotFoundException('Promo code not found');
+    }
+    promoCode.numbersUsed = count;
+    await this.promoCodeRepository.save(promoCode);
+  }
+
+  async updateCountForCampaign(campaignId: number, count: number) {
+    const campaign = await this.promoCampaignRepository.findOne({
+      where: {
+        id: campaignId,
+      },
+    });
+    if (!campaign) {
+      throw new NotFoundException('Promo campaign not found');
+    }
+    campaign.timesUsed = count;
+    await this.promoCampaignRepository.save(campaign);
   }
 }

@@ -32,7 +32,7 @@ export class ReceiptProductToppingEntity {
   price: number; // sale price
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
-  priceDiscounted: number; // price after discount
+  discounted: number; // amount discounted
 
   @CreateDateColumn()
   createdAt: Date;

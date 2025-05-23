@@ -20,7 +20,7 @@ export class PromoCampaignBonusEntity {
 
   @ManyToOne(
     () => PromoCampaignsEntity,
-    (promoCampaigns) => promoCampaigns.promoCampaignConditions,
+    (promoCampaigns) => promoCampaigns.promoCampaignBonus,
   )
   @JoinColumn({ name: 'promoCampaignsId' })
   promoCampaigns: PromoCampaignsEntity;

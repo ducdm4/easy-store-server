@@ -55,7 +55,7 @@ export class ReceiptProductEntity {
   price: number; // price in product table, originalPrice if price is empty
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
-  priceDiscounted: number; // price after discount (apply promo code or campaign or customer rank...)
+  discounted: number; // amount discounted
 
   @Column({ nullable: true, default: null, type: 'text' })
   note: string;

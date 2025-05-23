@@ -12,6 +12,7 @@ import { ReceiptProductEntity } from './receiptProduct.entity';
 import { PromoCampaignsEntity } from './promoCampaigns.entity';
 import { ReceiptProductToppingEntity } from './receiptProductTopping.entity';
 import { ReceiptEntity } from './receipt.entity';
+import { PromoCampaignBonusEntity } from './promoCampaignBonus.entity';
 
 @Entity({ name: 'receipt-promo' })
 export class ReceiptPromoEntity {
@@ -27,18 +28,11 @@ export class ReceiptPromoEntity {
   @ManyToOne(() => PromoCampaignsEntity)
   campaign: PromoCampaignsEntity;
 
-  // if receiptProduct && receiptToppingItem is null, this promo is applied to the whole receipt
-  @ManyToOne(() => ReceiptProductEntity)
-  receiptItem: ReceiptProductEntity;
-
-  @ManyToOne(() => ReceiptProductToppingEntity)
-  receiptToppingItem: ReceiptProductToppingEntity;
-
-  @Column({ nullable: true })
-  discountType: number; // 0: percent, 1: money
+  @ManyToOne(() => PromoCampaignBonusEntity)
+  campaignBonus: PromoCampaignBonusEntity;
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
-  discountAmount: number; // total discount in percent or money base on discountType
+  discountedAmount: number; // total discount in percent or money base on discountType
 
   @CreateDateColumn()
   createdAt: Date;

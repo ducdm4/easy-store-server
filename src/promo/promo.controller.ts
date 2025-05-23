@@ -91,7 +91,7 @@ export class PromoController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER])
+  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
   @Get('/campaign')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -101,10 +101,11 @@ export class PromoController {
   ) {
     try {
       const user = req.user as UserLoggedInDto;
+      const storeList = getStoreListForCheck(user);
       const filterOption = getFilterObject(req);
       const list = await this.promoService.getListPromoCampaign(
         req.query['storeId'].toString(),
-        user.storeList,
+        storeList,
         filterOption,
       );
       res.status(HttpStatus.OK).json({ data: list });
@@ -113,7 +114,7 @@ export class PromoController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
+  @Roles([ROLE_LIST.STORE_OWNER])
   @Get('/code/:code')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
@@ -135,11 +136,11 @@ export class PromoController {
     }
   }
 
-  @Roles([ROLE_LIST.STORE_OWNER, ROLE_LIST.STORE_SALE])
-  @Post('/hold-code/:code')
+  @Roles([ROLE_LIST.STORE_SALE])
+  @Get('/code/:code/sale')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UseFilters(new HttpExceptionFilter())
-  async holdPromoCode(
+  async getDetailCodeForSale(
     @Param() params: { code: string },
     @Req() req: Request,
     @Res() res: Response,
@@ -150,6 +151,7 @@ export class PromoController {
       const code = await this.promoService.getDetailPromoCode(
         params.code,
         storeList,
+        true,
       );
       res.status(HttpStatus.OK).json({ data: code });
     } catch (e) {

@@ -31,7 +31,10 @@ export class ReceiptEntity {
   total: number; // total after discount
 
   @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
-  totalDiscountAmount: number; // total money deducted from subtotal
+  totalItemDiscount: number; // total money deducted for item
+
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  discounted: number; // total money deducted for whole receipt
 
   @Column({ nullable: true })
   extraDiscount: number; // extra discount from owner, employee, ...(by percentage)
@@ -68,6 +71,18 @@ export class ReceiptEntity {
   @OneToOne(() => SpaceUnitEntity)
   @JoinColumn()
   spaceUnit: SpaceUnitEntity; // space unit that customer use
+
+  @Column({ nullable: true, default: null })
+  deliveryAddress: string;
+
+  @Column({ nullable: true, default: null })
+  deliveryName: string;
+
+  @Column({ nullable: true, default: null })
+  deliveryPhone: string;
+
+  @Column({ default: 0, type: 'decimal', precision: 11, scale: 2 })
+  deliveryFee: number;
 
   @ManyToOne(() => EmployeeInfoEntity)
   createdBy: EmployeeInfoEntity; // employee that create receipt
